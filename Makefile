@@ -22,7 +22,7 @@ endif
 ifneq ($(sdl_utils), false)
 # Comment the following line if using dynamic SDL
 # CFLAGS += -D_SDL_STATIC_LIB
-CFLAGS += -D_REENTRANT -DLINUX_BETA
+CFLAGS += -D_REENTRANT
 endif
 ifeq ($(windowed_only), true)
 CFLAGS += -DWINDOWED_ONLY
