@@ -132,7 +132,10 @@ int loki_launchURL(const char *url)
 
     /* See what web browser is available */
     command = getenv("LOKI_BROWSER");
-    if ( ! command ) {
+    if ( ! command || ! *command ) {
+        command = getenv("BROWSER");
+    }
+    if ( ! command || ! *command ) {
         for ( i=0; i<(sizeof browser_list)/(sizeof browser_list[0]); ++i ) {
             if ( (running == browser_list[i].running) &&
                  valid_program(browser_list[i].program) ) {
