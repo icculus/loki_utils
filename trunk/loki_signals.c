@@ -39,6 +39,8 @@
 #define BUGS_EMAIL    "support@lokigames.com"
 #endif
 
+static void (*signal_cleanup)(void) = NULL;
+
 // Try to clean up gracefully on a signal, and terminate us if we fail
 static void catch_signal(int sig)
 {
@@ -119,13 +121,17 @@ static void catch_signal(int sig)
                 kill(0, SIGKILL);
             } while ( 1 );
 #else
-	_exit(-1);
+            _exit(-1);
 #endif //bk991008
 
             // Not reached -- we died just now.
         default:
             fprintf(stderr, "Unknown signal (%d) caught, cleaning up.\n", sig);
             break;
+        }
+        /* Cleanup after catching fatal signal */
+        if ( signal_cleanup ) {
+            signal_cleanup();
         }
     }
     exit(sig);
@@ -136,6 +142,17 @@ void loki_initsignals(void)
     // Add signal handlers
     signal(SIGABRT, catch_signal);
     signal(SIGSEGV, catch_signal);
+}
+
+/* This function sets function that is called to clean up the application
+   after a fatal signal is caught and handled.  If the application causes
+   a fatal signal while this function is called, it calls _exit(-1);
+   The cleanup function is prototyped:
+	void cleanup(void);
+*/
+void loki_signalcleanup(void (*cleanup)(void))
+{
+	signal_cleanup = cleanup;
 }
 
 void loki_breakdebugger(void)
