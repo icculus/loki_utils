@@ -200,6 +200,13 @@ void loki_initconfig(void)
     }
 }
 
+/* Make this easier to change from the application code */
+#ifdef LINUX_DEMO
+int loki_demo = 1;
+#else
+int loki_demo = 0;
+#endif
+
 void loki_printusage(char *argv0, const char *help_text)
 {
     int len;
@@ -207,12 +214,12 @@ void loki_printusage(char *argv0, const char *help_text)
     int i;
     printf("Linux version by Loki Entertainment Software\n");
     printf("http://www.lokigames.com/\n");
-#ifdef LINUX_DEMO
-    printf("Support - Full versions of our games have technical support\n");
-#elif !defined(LINUX_BETA)
-    printf("Support - Phone:  1-714-508-2140 (9-5 PM US Pacific Time)\n");
-    printf("          E-mail: support@lokigames.com\n");
-#endif
+    if ( loki_demo )
+      printf("Support - Full versions of our games have technical support\n");
+    else {
+      printf("Support - Phone:  1-714-508-2140 (9-5 PM US Pacific Time)\n");
+      printf("          E-mail: support@lokigames.com\n");
+    }
     printf("\n");
     printf("Usage: %s [options]\n", argv0);
 
