@@ -70,6 +70,9 @@ char *loki_gethomedir(void)
         }
         endpwent();
     }
+    if ( home == NULL ) {
+        home = ".";
+    }
     return home;
 }
 
@@ -144,10 +147,6 @@ void loki_initpaths(char *argv0)
     char *home, *ptr, *data_env;
 
     home = loki_gethomedir();
-    if ( home == NULL ) {
-        home = ".";
-    }
-
     if(*game_name == 0) /* Game name defaults to argv[0] */
       loki_setgamename(argv0, "0.1", "");
 
