@@ -220,7 +220,7 @@ void loki_printusage(char *argv0, const char *help_text)
     printf("Linux version by Loki Entertainment Software\n");
     printf("http://www.lokigames.com/\n");
     if ( loki_demo )
-      printf("Support - Full versions of our games have technical support\n");
+      printf("Technical support is only available with the full game\n");
     else {
       printf("Support - Phone:  1-714-508-2140 (9-5 PM US Pacific Time)\n");
       printf("          E-mail: support@lokigames.com\n");
