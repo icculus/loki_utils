@@ -385,16 +385,15 @@ void loki_parseargs(int argc, char *argv[], const char *extra_help)
             case -1:
                 remaining_args = &argv[optind];
                 return;
+            case 'q':
+                loki_runqagent(NULL);
+                exit(0);
             case 'v':
                 printf("%s\n", loki_getgamedescription());
                 printf("Built with glibc-%d.%d\n", __GLIBC__, __GLIBC_MINOR__);
                 exit(0);
             case 'h':
                 loki_printusage(argv[0], extra_help);
-                exit(0);
-                break;              
-            case 1:
-                loki_runqagent(NULL);
                 exit(0);
             case ':': /* Argument missing error */
                 for ( i=0; long_options[i].name; ++i ) {
@@ -422,14 +421,8 @@ void loki_parseargs(int argc, char *argv[], const char *extra_help)
                     }
                 }
                 if ( !long_options[i].name ) {
-                    /* Check for valid long options without a short form */
-                    if ( strcmp(optarg, "--qagent") == 0 ) {
-                        loki_runqagent(NULL);
-                        exit(0);
-                    } else {
-                        loki_printusage(argv[0], extra_help);
-                        exit(0);
-                    }
+                    loki_printusage(argv[0], extra_help);
+                    exit(0);
                 }
                 break;              
         }
