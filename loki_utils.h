@@ -54,8 +54,9 @@ extern void loki_initialize(int argc, char *argv[], const char *extra_help);
 /* This function initializes crash signal handlers */
 extern void loki_initsignals(void);
 
-/* This function prints out a stack trace to the log file descriptor.
-   'level' should usually be 0
+/* This function prints out a stack trace to standard error as well as
+   the given log file descriptor (use -1 to disable secondary logging).
+   'level' should usually be 0.
  */
 extern void loki_printstack(int level, int log);
 
