@@ -226,6 +226,7 @@ int loki_open(const char *file, int flags, mode_t mode)
         char path[PATH_MAX];
 
         sprintf(path, "%s/%s", loki_getprefpath(), file);
+        mkdirhier(path);
         value = open(path, flags, mode);
         if ( (value < 0) && (flags & O_RDWR) ) {
             /* Uh oh, need to copy from install path? */ ;
