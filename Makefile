@@ -10,7 +10,7 @@ CC = gcc
 CXX = g++
 AR = ar rcs
 
-CFLAGS += -Wall
+CFLAGS += -Wall -fsigned-char
 CFLAGS += $(INCLUDES)
 ifeq ($(DEBUG),true)
 CFLAGS += -g -O
