@@ -16,6 +16,7 @@
     License along with this library; if not, write to the Free
     Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
+/* $Id$ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,13 +31,13 @@ struct line {
     char *key;
     char *value;
     char *comment;
-    struct line *next;
+    struct line *next, *previous;
 };
 
 struct section {
     char *name;
     struct line *lines;
-    struct section *next;
+    struct section *next, *previous;
 };
 
 struct _loki_ini_file_t {
@@ -48,6 +49,7 @@ struct _loki_ini_file_t {
 
 struct _loki_ini_line_t {
     ini_file_t *ini;
+    struct section *section;
     struct line *current;
 };
 
@@ -75,8 +77,10 @@ static struct section *add_new_section(ini_file_t *ini)
         while ( ins->next )
             ins = ins->next;
         ins->next = ret;
+        ret->previous = ins;
     } else {
         ini->sections = ret;
+        ret->previous = NULL;
     }
 
     return ret;
@@ -96,8 +100,10 @@ static struct line *add_new_line(struct section *s)
         while ( ins->next )
             ins = ins->next;
         ins->next = ret;
+        ret->previous = ins;
     } else {
         s->lines = ret;
+        ret->previous = NULL;
     }
 
     return ret;
@@ -499,6 +505,7 @@ ini_line_t *loki_begin_iniline(ini_file_t *ini, const char *section)
         if ( (s->name && ! strcasecmp(section, s->name)) || ini->userreg ) {
             ini_line_t *ret = malloc(sizeof(ini_line_t));
             ret->ini = ini;
+            ret->section = s;
             ret->current = s->lines;
             while( ret->current && !ret->current->key ) {
                 ret->current = ret->current->next;
@@ -520,6 +527,17 @@ int loki_get_iniline(ini_line_t *iterator, const char **key, const char **value)
     }
     *key = iterator->current->key;
     *value = iterator->current->value;
+    return 1;
+}
+
+/* Update the value of a line */
+int loki_update_iniline(ini_line_t *iterator, const char *value)
+{
+    if ( ! iterator || ! iterator->current ) {
+        return 0;
+    }
+    free(iterator->current->value);
+    iterator->current->value = strdup(value);
     return 1;
 }
 
@@ -550,6 +568,99 @@ void loki_free_iniline(ini_line_t *iterator)
     free(iterator);
 }
 
+/* More general function to remove a specified key in a section */
+
+int loki_remove_iniline(ini_file_t *ini, const char *section, const char *key)
+{
+    struct section *s;
+    struct line *l;
+
+    for ( s = ini->sections ; s ; s = s->next ) {
+        if ( (s->name && !strcasecmp(section, s->name)) || ini->userreg ) {
+            for( l = s->lines; l; l = l->next ) {
+                if ( l->key && !strcasecmp(key, l->key) ) {
+                    struct line *prevl = l->previous;
+                    /* Found it */
+                    if ( prevl ) {
+                        prevl->next = l->next;
+                    } else {
+                        s->lines = l->next;
+                    }
+                    if ( l->next ) {
+                        l->next->previous = prevl;
+                    }
+                    free(l->key); free(l->value); free(l->comment);
+                    free(l);
+                    ini->changed = 1;
+                    if ( ! s->lines ) { /* Section is now empty, remove it */
+                        struct section *prevs = s->previous;
+                        if ( prevs ) {
+                            prevs->next = s->next;
+                        } else {
+                            ini->sections = s->next;
+                        }
+                        if ( s->next ) {
+                            s->next->previous = prevs;
+                        }
+                        free(s->name);
+                        free(s);
+                    }
+                    return 1;
+                }
+            }
+            return 0;
+        }
+    }
+    return 0;
+}
+
+/* Remove the current line; the iterator is changed to point to the next line if available */
+int loki_remove_current_iniline(ini_line_t *iterator)
+{
+    struct line *prev = iterator->current->previous, *cur = iterator->current;
+    if ( prev ) {
+        prev->next = cur->next;
+    } else {
+        iterator->section->lines = cur->next;
+    }
+    iterator->current = cur->next;
+    if ( iterator->current ) {
+        iterator->current->previous = prev;
+    }
+    free(cur->key);
+    free(cur->value);
+    free(cur->comment);
+    free(cur);
+
+    iterator->ini->changed = 1;
+
+    /* Check if section is empty now */
+    if ( iterator->section->lines ) {
+        /* We should still have a valid iterator at this point, unless we reached the end */
+        return iterator->current != NULL;
+    } else {
+        struct section *section = iterator->section;
+        /* Section is empty, remove it */
+        if ( section->previous ) {
+            section->previous->next = section->next;
+        } else {
+            iterator->ini->sections = section->next;
+        }
+        if ( section->next ) {
+            section->next->previous = section->previous;
+        }
+        /* Check if the iterator for this file is pointing to the deleted section */
+        /* TODO: Check for bad things that might happen with that */
+        if ( iterator->ini->iterator == section ) {
+            iterator->ini->iterator = section->next;
+        }
+        free(section->name);
+        free(section);
+    }
+    return 0;
+}
+
+
 /* Returns the name of the fist section of the given file (initializes an internal iterator) */
 const char *loki_begin_inisection(ini_file_t *ini)
 {
@@ -575,4 +686,19 @@ const char *loki_next_inisection(ini_file_t *ini)
     } else {
         return NULL;
     }
+}
+
+int loki_iterate_iniline(ini_file_t *ini, const char *section, ini_callback_t func, void *param)
+{
+    struct section *s;
+    int ret = 0;
+    for ( s = ini->sections ; s ; s = s->next ) {
+        if ( (s->name && !strcasecmp(section, s->name)) || ini->userreg ) {
+            struct line *l;
+            for( l = s->lines; l; l = l->next ) {
+                ret += func(ini, section, l->key, l->value, param);
+            }
+        }
+    }
+    return ret;
 }

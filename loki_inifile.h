@@ -30,6 +30,10 @@ struct _loki_ini_file_t; /* Defined in loki_inifile.c */
 
 typedef struct _loki_ini_file_t ini_file_t;
 
+typedef int (*ini_callback_t)(ini_file_t *ini, 
+                              const char *section, const char *key, const char *value,
+                              void *param);
+
 /* Open and loads the INI file, returns INI object or NULL if failed */
 ini_file_t * loki_openinifile(const char *path);
 
@@ -81,6 +85,15 @@ ini_line_t *loki_begin_iniline(ini_file_t *ini, const char *section);
  */
 int loki_get_iniline(ini_line_t *iterator, const char **key, const char **value);
 
+/* Update the value of a line */
+int loki_update_iniline(ini_line_t *iterator, const char *value);
+
+/* Remove a specified key in a section. If section is empty, it will be removed as well */
+int loki_remove_iniline(ini_file_t *ini, const char *section, const char *key);
+
+/* Remove the current line; the iterator is changed to point to the next line if available */
+int loki_remove_current_iniline(ini_line_t *iterator);
+
 /* Iterator to the next line of the section.
    Returns zero when at the end of the section or an error occured.
  */
@@ -90,6 +103,10 @@ int loki_next_iniline(ini_line_t *iterator);
    Must be called when the user is done with the iterator.
  */
 void loki_free_iniline(ini_line_t *iterator);
+
+/* Iterate through all lines of a section with a callback function */
+
+int loki_iterate_iniline(ini_file_t *ini, const char *section, ini_callback_t func, void *param);
 
 #ifdef __cplusplus
 };
