@@ -31,14 +31,14 @@ endif
 CXXFLAGS = $(CFLAGS)
 .SUFFIXES: .c .cpp
 
-CSRC	= loki_config.c loki_network.c loki_paths.c loki_signals.c loki_utils.c loki_inifile.c
+CSRC	= loki_config.c loki_network.c loki_paths.c loki_signals.c loki_utils.c loki_inifile.c loki_cpuinfo.c
 CPPSRC	= 
 ifneq ($(sdl_utils), false)
 CSRC	+= sdl_pcx.c
 CPPSRC	+= sdl_utils.cpp
 endif
 
-OBJS = $(CSRC:.c=.o) $(CPPSRC:.cpp=.o) 
+OBJS := $(CSRC:.c=.o) $(CPPSRC:.cpp=.o) 
 
 TARGET = libloki.a
 
