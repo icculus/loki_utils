@@ -7,8 +7,6 @@ extern "C" {
 
 /* Simple SDL Window Manager access functions */
 
-extern void sdl_SetVideoSurface(SDL_Surface *screen);
-extern SDL_Surface *sdl_GetVideoSurface(void);
 extern int sdl_GetScreenSize(int *width, int *height);
 extern int sdl_GetWindowSize(int *width, int *height);
 extern int sdl_GetWindowPosition(int *x, int *y);

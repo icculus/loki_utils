@@ -15,17 +15,6 @@
 extern "C" {
 #endif
 
-static SDL_Surface *sdl_screen = NULL;
-
-void sdl_SetVideoSurface(SDL_Surface *screen)
-{
-	sdl_screen = screen;
-}
-SDL_Surface *sdl_GetVideoSurface(void)
-{
-	return sdl_screen;
-}
-
 int sdl_GetScreenSize(int *width, int *height)
 {
     SDL_SysWMinfo info;
@@ -465,19 +454,18 @@ void sdl_ToggleConfineMouse( void )
 void sdl_ConfineMouse(int on, int update)
 {
     SDL_SysWMinfo info;
+    SDL_Surface *sdl_screen;
 
-    if(!sdl_screen){
-	// Watch out there, laddy.
-	return;
+    /* Update the state variable */
+    if ( update ) {
+        isMouseConfined = on;
     }
 
-    if(!sdl_screen && update){
-      isMouseConfined = on; // Only initialize the variable
-      return;
-    }
-
-    if( sdl_screen->flags & SDL_FULLSCREEN )
+    /* See if the display is in fullscreen mode */
+    sdl_screen = SDL_GetVideoSurface();
+    if ( !sdl_screen || (sdl_screen->flags & SDL_FULLSCREEN) ) {
         return;
+    }
 
     SDL_VERSION(&info.version);
     if ( SDL_GetWMInfo(&info) ) {
@@ -517,8 +505,6 @@ void sdl_ConfineMouse(int on, int update)
                 XUngrabPointer(display, CurrentTime);
                 XUngrabKeyboard(display, CurrentTime);
             }
-            if(update)
-              isMouseConfined = on;
             info.info.x11.unlock_func();
         }
 #else
