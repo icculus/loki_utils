@@ -214,6 +214,7 @@ ini_file_t *loki_openinifile(const char *path)
 		case _key:
 			if ( c == '=' ) {
 				*ptr = '\0';
+				trim_spaces(buf);
 				l->key = strdup(buf);
 				ptr = buf;
 				st = _value;
@@ -268,6 +269,26 @@ ini_file_t *loki_openinifile(const char *path)
 			break;
 		}
 		prevc = c;
+	}
+
+	/* End of file reached, check for unfinished stuff */
+	switch(st) {
+	case _value:
+	  *ptr = '\0';
+	  trim_spaces(buf);
+	  l->value = strdup(buf);
+	  break;
+	case _comment:
+	  *ptr = '\0';
+	  if ( ! l ) {
+		l = add_new_line(s);
+	  }
+	  l->comment = strdup(buf);
+	  break;
+	case _section:
+	  fprintf(stderr,"Parse error in %s: end of file reached while in section name.\n", path);
+	  break;
+	default:
 	}
 	return ini;
 }
