@@ -187,7 +187,8 @@ ini_file_t *loki_openinifile(const char *path)
 				break;
 			case ';': case '#':
 				l = add_new_line(s);
-				st = _comment; break;
+				st = _comment;
+				break;
 			case '[':
 				st = _section;
 				s = add_new_section(ini);
@@ -226,8 +227,10 @@ ini_file_t *loki_openinifile(const char *path)
 				l->key = strdup(buf);
 				ptr = buf;
 				st = _value;
-			} else if ( c == '\n' || c == '\r' ) {
-				fprintf(stderr,"Parse error in %s on line %d\n", path, line_number);
+			} else if ( c == '\r' ) {
+				// Nothing
+			} else if ( c == '\n' ) {
+				fprintf(stderr,"Parse error in %s on line %d: end of line before rvalue\n", path, line_number);
 				fclose(fd);
 				free_section(ini->sections);
 				free(ini);
@@ -253,6 +256,7 @@ ini_file_t *loki_openinifile(const char *path)
 			if ( c == ';' || c == '#' ) {
 				st = _comment;
 			} else if ( c == '\n' ) {
+				++ line_number;
 				st = _start;
 			}
 			break;
