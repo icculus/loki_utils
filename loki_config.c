@@ -195,6 +195,8 @@ void loki_initconfig(void)
 
         sprintf(configfile, "%s/.loki/%s", home, CONFIG_FILENAME);
         loki_parseconfig(configfile);
+        sprintf(configfile, "%s/%s", loki_getdatapath(), CONFIG_FILENAME);
+        loki_parseconfig(configfile);
         sprintf(configfile, "%s/%s", loki_getprefpath(), CONFIG_FILENAME);
         loki_parseconfig(configfile);
     }

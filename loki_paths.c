@@ -74,34 +74,45 @@ char *loki_gethomedir(void)
 /* Equivalent to the Win32 SplitPath() call */
 void loki_splitpath(const char *path, char *drive, char *dir, char *fname, char *ext)
 {
-	char *copy = strdup(path), *ptr;
+    char *copy = strdup(path), *ptr;
 
-	strcpy(drive, "");
-	ptr = strrchr(copy, '/');
-	if(ptr) {
-		strcpy(fname, ptr+1);
-		*ptr = '\0';
-		strcpy(dir, copy);
-		strcat(dir,"/");
-	} else {
-		*dir = '\0';
-		strcpy(fname,copy);
-	}
-	ptr = strrchr(fname, '.');
-	if(ptr) {
-		strcpy(ext, ptr);
-		*ptr = '\0';
-	} else 
-		*ext = '\0';
-	free(copy);
+    if ( drive ) {
+        strcpy(drive, "");
+    }
+    ptr = strrchr(copy, '/');
+    if ( !ptr ) {
+        ptr = strrchr(copy, '\\');
+    }
+    if(ptr) {
+        strcpy(fname, ptr+1);
+        *ptr = '\0';
+        if ( dir ) {
+            strcpy(dir, copy);
+            strcat(dir,"/");
+        }
+    } else {
+        if ( dir ) {
+            *dir = '\0';
+        }
+        strcpy(fname,copy);
+    }
+    ptr = strrchr(fname, '.');
+    if(ptr) {
+        strcpy(ext, ptr);
+        *ptr = '\0';
+    } else 
+        *ext = '\0';
+    free(copy);
 }
 
 /* Must be called BEFORE loki_initialize */
 void loki_setgamename(const char *n)
 {
+#ifndef __TEST_MAIN
     if ( strcmp(n+strlen(n)-5, "_demo") == 0 ) {
         loki_isdemo(1);
     }
+#endif
     strncpy(game_name, n, sizeof(game_name));
 }
 
@@ -220,7 +231,7 @@ void loki_setcdrompath(const char *path)
 
 void  loki_cdpromptfunction (loki_prompt_func func)
 {
-	prompt_func = func;
+    prompt_func = func;
 }
 
 char *loki_getprefpath(void)
@@ -253,7 +264,7 @@ char *loki_getdatafile(const char *file, char *filepath, int maxpath)
 
 char *loki_promptdatafile(const char *file, char *filepath, int maxpath)
 {
-	static int in_prompt = 0;
+    static int in_prompt = 0;
 
     strncpy(filepath, loki_getdatapath(), maxpath);
     strncat(filepath, "/", maxpath);
@@ -262,11 +273,11 @@ char *loki_promptdatafile(const char *file, char *filepath, int maxpath)
         strncpy(filepath, loki_getcdrompath(), maxpath);
         strncat(filepath, "/", maxpath);
         strncat(filepath, file, maxpath);
-		if ( (access(filepath, R_OK) != 0) && prompt_func && !in_prompt ) {
-			in_prompt = 1;
-			while(! (*prompt_func)(file) );
-			in_prompt = 0;
-		}
+        if ( (access(filepath, R_OK) != 0) && prompt_func && !in_prompt ) {
+            in_prompt = 1;
+            while(! (*prompt_func)(file) );
+            in_prompt = 0;
+        }
     }
     return filepath;
 }
@@ -276,24 +287,24 @@ char *loki_getpreffile(const char *file, char *filepath, int maxpath)
     strncpy(filepath, loki_getprefpath(), maxpath);
     strncat(filepath, "/", maxpath);
     strncat(filepath, file, maxpath);
-	return filepath;
+    return filepath;
 }
 
 char *loki_getcdromfile(const char *file, char *filepath, int maxpath)
 {
-	/* The CDROM path must have been set */
+    /* The CDROM path must have been set */
     strncpy(filepath, loki_getcdrompath(), maxpath);
     strncat(filepath, "/", maxpath);
     strncat(filepath, file, maxpath);
-	return filepath;
+    return filepath;
 }
 
 size_t loki_getavailablespace(const char *path)
 {
-	struct statfs buf;
-	if(statfs(path,&buf))
-		return 0;
-	return (buf.f_bsize * buf.f_bavail) / 1024;
+    struct statfs buf;
+    if(statfs(path,&buf))
+        return 0;
+    return (buf.f_bsize * buf.f_bavail) / 1024;
 }
 
 /* Code to determine the mount point of a CD-ROM */
@@ -323,23 +334,23 @@ int loki_getmountpoint(const char *device, char *mntpt, int max_size)
     if( mountfp != NULL ) {
         mounted = 0;
         while( (mntent = getmntent( mountfp )) != NULL ){
-			char *tmp, mntdev[1024];
+            char *tmp, mntdev[1024];
 
-			strcpy(mntdev, mntent->mnt_fsname);
-			if ( strcmp(mntent->mnt_type, "supermount") == 0 ) {
-				tmp = strstr(mntent->mnt_opts, "dev=");
-				if ( tmp ) {
-					strcpy(mntdev, tmp+strlen("dev="));
-					tmp = strchr(mntdev, ',');
-					if ( tmp ) {
-						*tmp = '\0';
-					}
-				}
-			}
-			if( strncmp(mntdev, "/dev", 4) || 
-				realpath(mntdev, mntdevpath) == NULL ) {
-				continue;
-			}
+            strcpy(mntdev, mntent->mnt_fsname);
+            if ( strcmp(mntent->mnt_type, "supermount") == 0 ) {
+                tmp = strstr(mntent->mnt_opts, "dev=");
+                if ( tmp ) {
+                    strcpy(mntdev, tmp+strlen("dev="));
+                    tmp = strchr(mntdev, ',');
+                    if ( tmp ) {
+                        *tmp = '\0';
+                    }
+                }
+            }
+            if( strncmp(mntdev, "/dev", 4) || 
+                realpath(mntdev, mntdevpath) == NULL ) {
+                continue;
+            }
             if( strcmp( mntdevpath, devpath ) == 0 ){
                 mounted = 1;
                 assert(strlen( mntent->mnt_dir ) < max_size);
@@ -356,16 +367,17 @@ int loki_getmountpoint(const char *device, char *mntpt, int max_size)
 #ifdef __TEST_MAIN
 int main(int argc, char *argv[])
 {
-	char cdrom[1024];
+    char cdrom[1024];
 
+    loki_setgamename("test");
     loki_initpaths(argv[0]);
     printf("Data path: %s\n", loki_getdatapath());
     printf("Pref path: %s\n", loki_getprefpath());
     if ( loki_getmountpoint("/dev/cdrom", cdrom, sizeof(cdrom)) ) {
-		printf("CD-ROM at: %s\n", cdrom);
-	} else {
-		printf("CD-ROM not detected\n");
-	}
-	exit(0);
+        printf("CD-ROM at: %s\n", cdrom);
+    } else {
+        printf("CD-ROM not detected\n");
+    }
+    exit(0);
 }
 #endif
