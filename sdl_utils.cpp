@@ -4,8 +4,8 @@
 #include <limits.h>
 #include <stdlib.h>
 
-#include "SDL.h"
-#include "SDL_syswm.h"
+#include <SDL/SDL.h>
+#include <SDL/SDL_syswm.h>
 #ifdef unix
 #include <X11/Xutil.h>
 #endif
