@@ -429,7 +429,7 @@ int loki_writeinifile(ini_file_t *ini, const char *path)
 	if ( path ) {
 		fd = fopen(path, "wb");
 		if ( ! fd ) {
-			perror("fopen");
+			perror("INI fopen(wb)");
 			return 0;
 		}
 	} else {
@@ -438,7 +438,7 @@ int loki_writeinifile(ini_file_t *ini, const char *path)
 		}
 		ini->fd = fopen(ini->path, "wb");
 		if( ! ini->fd ) {
-			perror("fopen");
+			perror("INI fopen(wb)");
 			return 0;
 		}
 		fd = ini->fd;
