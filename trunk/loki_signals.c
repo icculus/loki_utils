@@ -63,19 +63,15 @@ static void print_crash(int log, const char *fmt, ...)
 void loki_printstack(int level, int log)
 {
 #ifdef HAS_EXECINFO
-    void *array[64]; int size, i;
-#if 0 /*(__GLIBC__ > 2) || ((__GLIBC__ == 2) && (__GLIBC_MINOR__ >= 1))*/
-    char **syms;
-#endif
+    void *array[64];
+    int size;
     print_crash(log, "Stack dump:\n");
     print_crash(log, "{\n");
     size = backtrace(array, (sizeof array)/(sizeof array[0]));
-#if 0 /*(__GLIBC__ > 2) || ((__GLIBC__ == 2) && (__GLIBC_MINOR__ >= 1))*/
-    syms = backtrace_symbols(array, size);
-    for ( i=level+1; i<size; ++i ) {
-        print_crash(log, "\t%s\n", syms[i]);
-    }
-    free(syms);
+#if (__GLIBC__ > 2) || ((__GLIBC__ == 2) && (__GLIBC_MINOR__ >= 1))
+    backtrace_symbols_fd(array, size, 2);
+    if (log >= 0)
+	backtrace_symbols_fd(array, size, log);
 #else
     for ( i=2; i<size; ++i ) {
         print_crash(log, "\t%p\n", array[i]);
