@@ -1,6 +1,6 @@
 /*
     Loki Game Utility Functions
-    Copyright (C) 1999  Loki Entertainment Software
+    Copyright (C) 1999  Loki Software, Inc.
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Library General Public
@@ -282,7 +282,7 @@ void loki_printusage(char *argv0, const char *help_text)
         argv0 = strrchr(argv0, '/')+1;
     }
 
-    printf("Linux version by Loki Entertainment Software\n");
+    printf("Linux version by Loki Software, Inc.\n");
     printf("http://www.lokigames.com/\n");
     if ( loki_demo ) {
         printf("Technical support is only available with the full game\n");
