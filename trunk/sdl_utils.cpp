@@ -536,13 +536,6 @@ void sdl_GetInputFocus(void)
 }
 #endif
 
-static int isWindowIconic = 0;
-
-int sdl_IsWindowIconic(void)
-{
-	return isWindowIconic;
-}
-
 /* Once the window is iconified, it doesn't get input until the window
    manager brings it back, so sdl_IconifyWindow(0) is nearly useless.
 */
@@ -575,7 +568,6 @@ void sdl_IconifyWindow(int on)
                 XMapWindow(display, window);
             }
 
-			isWindowIconic = on;
             info.info.x11.unlock_func();
         }
 #else
