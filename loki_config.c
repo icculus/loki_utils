@@ -205,8 +205,24 @@ void loki_printusage(char *argv0, const char *help_text)
 #endif
     printf("\t[-s | --nosound]\tDo not access the soundcard\n");
     printf("\t[-c | --nocdrom]\tDo not access the CD-ROM\n");
+
     for(i = COMMON_OPTIONS; i<nb_options; i++)
-      printf("\t[-%c | --%s]\t%s\n", long_options[i].val, long_options[i].name, option_comment[i-COMMON_OPTIONS]);
+    {
+      printf("\t");
+      if (long_options[i].val != '\0')
+        printf("[-%c | ", long_options[i].val);
+      else
+        printf("[     ");
+
+      if (long_options[i].name != NULL);
+        printf("--%s]", long_options[i].name);
+
+      if (option_comment[i-COMMON_OPTIONS] != NULL)
+        printf("\t%s", option_comment[i-COMMON_OPTIONS]);
+
+      putchar('\n');
+    }
+
     if(help_text)
       printf("%s", help_text);
     putchar('\n');
