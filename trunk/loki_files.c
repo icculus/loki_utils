@@ -43,7 +43,7 @@ int loki_stat(const char *file, struct stat *statb)
 
     /* First look in preferences, then in data and cdrom directories */
     value = -1;
-    for ( pass = 0; (value < 0) && (pass < 3); ++pass ) {
+    for ( pass = 0; (value < 0) && (pass < 4); ++pass ) {
         switch (pass) {
             case 0:
                 strcpy(path, loki_getprefpath());
@@ -54,11 +54,9 @@ int loki_stat(const char *file, struct stat *statb)
             case 2:
                 strcpy(path, loki_getcdrompath());
                 break;
-#if 0
             case 3:
                 strcpy(path, ".");
                 break;
-#endif
         }
         if ( path[0] ) {
             strcat(path, "/");
@@ -112,7 +110,7 @@ FILE *loki_fopen(const char *file, const char *mode)
     } else {
         /* First look in preferences, then in data directory */
         value = 0;
-        for ( pass = 0; !value && (pass < 3); ++pass ) {
+        for ( pass = 0; !value && (pass < 4); ++pass ) {
             switch (pass) {
                 case 0:
                     strcpy(path, loki_getprefpath());
@@ -123,11 +121,9 @@ FILE *loki_fopen(const char *file, const char *mode)
                 case 2:
                     strcpy(path, loki_getcdrompath());
                     break;
-#if 0
                 case 3:
                     strcpy(path, ".");
                     break;
-#endif
             }
             if ( path[0] ) {
                 strcat(path, "/");
@@ -201,7 +197,7 @@ int loki_open(const char *file, int flags, mode_t mode)
 
         /* First look in preferences, then in data directory */
         value = -1;
-        for ( pass = 0; (value < 0) && (pass < 3); ++pass ) {
+        for ( pass = 0; (value < 0) && (pass < 4); ++pass ) {
             switch (pass) {
                 case 0:
                     path = loki_getprefpath();
@@ -212,11 +208,9 @@ int loki_open(const char *file, int flags, mode_t mode)
                 case 2:
                     path = loki_getcdrompath();
                     break;
-#if 0
                 case 3:
                     path = ".";
                     break;
-#endif
             }
             if ( path[0] ) {
                 value = open_nocase(path, file, O_RDONLY, 0);
