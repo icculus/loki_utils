@@ -17,6 +17,7 @@
     Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
+#include <unistd.h>
 #include "loki_utils.h"
 
 /* This function parses command line arguments and initializes the utility

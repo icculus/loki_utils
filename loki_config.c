@@ -31,10 +31,16 @@
 /* This is the name of the configuration file */
 #define CONFIG_FILENAME    "userprofile.txt"
 
+/* This defines the maximum number of options recognized */
+#define MAX_OPTIONS 16
+
+/* How many builtin options ? */
+#define COMMON_OPTIONS 6
+
 /* This is a list of general configuration parameters in userprofile.txt
    and set from command-line options:
 */
-static struct option long_options[] =
+static struct option long_options[MAX_OPTIONS+1] =
 {
   { "help",        0, 0, 'h' },
   { "version",     0, 0, 'v' },
@@ -44,6 +50,10 @@ static struct option long_options[] =
   { "nocdrom",     0, 0, 'c' },
   { NULL,          0, 0,  0  }
 };
+
+static const char *option_comment[MAX_OPTIONS - COMMON_OPTIONS] = {NULL,};
+
+static int nb_options = COMMON_OPTIONS;
 
 /* For now, we use a simple linked-list implementation */
 typedef struct config_element {
@@ -149,6 +159,7 @@ void loki_initconfig(void)
 
 void loki_printusage(char *argv0, const char *help_text)
 {
+    int i;
     printf("Linux version by Loki Entertainment Software\n");
     printf("http://www.lokigames.com/\n");
 #ifdef LINUX_DEMO
@@ -159,14 +170,32 @@ void loki_printusage(char *argv0, const char *help_text)
 #endif
     printf("\n");
     printf("Usage: %s [options]\n", argv0);
-    printf("\t[-h | --help]        Display this help message\n");
-    printf("\t[-v | --version]     Display the game version\n");
-    printf("\t[-f | --fullscreen]  Run the game fullscreen\n");
-    printf("\t[-w | --windowed]    Run the game in a window\n");
-    printf("\t[-s | --nosound]     Do not access the soundcard\n");
-    printf("\t[-c | --nocdrom]     Do not access the CD-ROM\n");
+    printf("\t[-h | --help]\t\tDisplay this help message\n");
+    printf("\t[-v | --version]\tDisplay the game version\n");
+    printf("\t[-f | --fullscreen]\tRun the game fullscreen\n");
+    printf("\t[-w | --windowed]\tRun the game in a window\n");
+    printf("\t[-s | --nosound]\tDo not access the soundcard\n");
+    printf("\t[-c | --nocdrom]\tDo not access the CD-ROM\n");
+	for(i = COMMON_OPTIONS; i<nb_options; i++)
+	  printf("\t[-%c | --%s]\t%s\n", long_options[i].val, long_options[i].name, option_comment[i-COMMON_OPTIONS]);
     printf("%s", help_text);
     printf("\n");
+}
+
+/* This registers a new command-line option switch */
+void loki_registeroption(const char *lng, char sht, const char *comment)
+{
+  if(nb_options < MAX_OPTIONS){
+	static struct option fin_opt = {NULL, 0,0,0};
+
+	long_options[nb_options].name = strdup(lng); /* Needs to be free()'d at some point */
+	long_options[nb_options].flag = NULL;
+	long_options[nb_options].has_arg = 0;
+	long_options[nb_options].val = sht;
+	option_comment[nb_options - COMMON_OPTIONS] = comment;
+	nb_options ++;
+	long_options[nb_options] = fin_opt;
+  }
 }
 
 /* This function parses command line arguments to finalize the config.
@@ -175,11 +204,17 @@ void loki_printusage(char *argv0, const char *help_text)
 void loki_parseargs(int argc, char *argv[], const char *extra_help)
 {
     extern char game_version[];
+	char short_options[MAX_OPTIONS+1];
+	int i;
+   
+	for(i=0; i<nb_options; i++)
+	  short_options[i] = long_options[i].val;
+	short_options[i] = '\0';
 
     while (1) {  /* Loop terminates when getopt returns -1 and we return */
         int c, i;
 
-        c = getopt_long_only(argc, argv, "hvfwscdj", long_options, 0);
+        c = getopt_long_only(argc, argv, short_options, long_options, 0);
         switch (c) {
             case -1:
                 return;
@@ -188,21 +223,22 @@ void loki_parseargs(int argc, char *argv[], const char *extra_help)
                 printf("Built with glibc-%d.%d on %s\n",
                        __GLIBC__, __GLIBC_MINOR__, __DATE__);
                 exit(0);
-            case 'f':
-            case 'w':
-            case 's':
-            case 'c':
+            case 'h':
+                loki_printusage(argv[0], extra_help);
+                exit(0);
+                break;			  
+            default:
                 for ( i=0; long_options[i].name; ++i ) {
                     if ( c == long_options[i].val ) {
                         loki_insertconfig(long_options[i].name, "1");
                         break;
                     }
                 }
-                break;
-            case 'h':
-            default:
-                loki_printusage(argv[0], extra_help);
-                exit(0);
+				if(!long_options[i].name){
+				  loki_printusage(argv[0], extra_help);
+				  exit(0);
+				}
+                break;			  
         }
     }
 }

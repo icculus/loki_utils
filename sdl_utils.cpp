@@ -216,7 +216,7 @@ void sdl_RestoreTitleBar(void)
 
 static char *clipboard = NULL;
 
-static int clipboard_filter(const SDL_Event *event)
+int sdl_ClipboardFilter(const SDL_Event *event)
 {
     Display *display;
 
@@ -280,7 +280,7 @@ void sdl_InitClipboard(void)
         if ( info.subsystem == SDL_SYSWM_X11 ) {
             /* Enable the special window hook events */
             SDL_EventState(SDL_SYSWMEVENT, SDL_ENABLE);
-            SDL_SetEventFilter(clipboard_filter);
+            SDL_SetEventFilter(sdl_ClipboardFilter);
         }
     }
 }
@@ -487,6 +487,28 @@ void sdl_ConfineMouse(int on, int update)
     }
 }
 
+void sdl_AutoRaise(void)
+{
+    SDL_SysWMinfo info;
+
+    SDL_VERSION(&info.version);
+    if ( SDL_GetWMInfo(&info) ) {
+#ifdef unix
+        if ( info.subsystem == SDL_SYSWM_X11 ) {
+            Display *display;
+            Window window;
+
+            info.info.x11.lock_func();
+            display = info.info.x11.display;
+            window = info.info.x11.window;
+            XSetInputFocus(display, window, RevertToPointerRoot, CurrentTime);
+            info.info.x11.unlock_func();
+        }
+#else
+#error Need to implement these functions for other systems
+#endif // unix
+    }
+}
 
 #if 0  // This is dangerous to use, because it may be called when
        // the application is unmapped, causing a fatal X11 error.
@@ -513,6 +535,13 @@ void sdl_GetInputFocus(void)
     }
 }
 #endif
+
+static int isWindowIconic = 0;
+
+int sdl_IsWindowIconic(void)
+{
+	return isWindowIconic;
+}
 
 /* Once the window is iconified, it doesn't get input until the window
    manager brings it back, so sdl_IconifyWindow(0) is nearly useless.
@@ -546,6 +575,7 @@ void sdl_IconifyWindow(int on)
                 XMapWindow(display, window);
             }
 
+			isWindowIconic = on;
             info.info.x11.unlock_func();
         }
 #else
