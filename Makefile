@@ -9,6 +9,7 @@ DEBUG = true
 CC = gcc
 CXX = g++
 AR = ar rcs
+ARCH = $(shell /loki/scripts/print_arch)
 
 INCLUDES += -I/usr/X11R6/include
 CFLAGS += -Wall -fsigned-char
@@ -46,24 +47,30 @@ CPPSRC	+= sdl_utils.cpp
 CFLAGS  += $(shell sdl-config --cflags)
 endif
 
-OBJS := $(CSRC:.c=.o) $(CPPSRC:.cpp=.o) 
+OBJS := $(CSRC:%.c=$(ARCH)/%.o) $(CPPSRC:%.cpp=$(ARCH)/%.o) 
 
-TARGET = libloki.a
+TARGET = $(ARCH)/libloki.a
 
-.c.o:
-	$(CC) $(CFLAGS) -c $<
+$(ARCH)/%.o: %.c
+	$(CC) -o $@ $(CFLAGS) -c $<
 
-.cpp.o:
-	$(CXX) $(CXXFLAGS) -c $<
+$(ARCH)/%.o: %.cpp
+	$(CXX) -o $@ $(CXXFLAGS) -c $<
 
-$(TARGET): $(OBJS)
+$(TARGET): $(ARCH) $(OBJS)
 	$(AR) $(TARGET) $(OBJS)
 
+$(ARCH):
+	mkdir $(ARCH)
+
 testini: testini.c $(TARGET)
-	$(CC) $(CFLAGS) -o testini testini.c -L. -lloki
+	$(CC) $(CFLAGS) -o testini testini.c -L$(ARCH) -lloki
 
 clean:
-	rm -f $(OBJS) $(TARGET) *~
+	rm -f $(ARCH)/*.o
+
+distclean: clean
+	rm -f $(TARGET)
 
 dep: depend
 
