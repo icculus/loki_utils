@@ -20,6 +20,9 @@
 #ifndef _LOKI_UTILS_H
 #define _LOKI_UTILS_H
 
+/* For size_t. */
+#include <stddef.h>
+
 #include "loki_config.h"
 
 #ifdef __cplusplus
