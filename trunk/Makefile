@@ -51,9 +51,6 @@ TARGET = libloki.a
 $(TARGET): $(OBJS)
 	$(AR) $(TARGET) $(OBJS)
 
-testargs: $(TARGET) testargs.c
-	$(CC) $(CFLAGS) -o testargs testargs.c -L. -lloki
-
 clean:
 	rm -f $(OBJS) $(TARGET)
 
