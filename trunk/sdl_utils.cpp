@@ -1,6 +1,9 @@
 
 /* Simple SDL access functions */
 
+#include <limits.h>
+#include <stdlib.h>
+
 #include "SDL.h"
 #include "SDL_syswm.h"
 #ifdef unix
@@ -211,6 +214,177 @@ void sdl_RestoreTitleBar(void)
     }
 }
 
+static char *clipboard = NULL;
+
+static int clipboard_filter(const SDL_Event *event)
+{
+    Display *display;
+
+    /* Post all non-window manager specific events */
+    if ( event->type != SDL_SYSWMEVENT ) {
+        return(1);
+    }
+
+    /* Handle window-manager specific clipboard events */
+    display = event->syswm.msg->event.xevent.xany.display;
+    switch (event->syswm.msg->event.xevent.type) {
+        /* Copy the selection from XA_CUT_BUFFER0 to the requested property */
+        case SelectionRequest: {
+            XSelectionRequestEvent *req;
+            XEvent sevent;
+            int seln_format;
+            unsigned long nbytes;
+            unsigned long overflow;
+            unsigned char *seln_data;
+
+            req = &event->syswm.msg->event.xevent.xselectionrequest;
+            sevent.xselection.type = SelectionNotify;
+            sevent.xselection.display = req->display;
+            sevent.xselection.selection = req->selection;
+            sevent.xselection.target = None;
+            sevent.xselection.property = None;
+            sevent.xselection.requestor = req->requestor;
+            sevent.xselection.time = req->time;
+            if ( XGetWindowProperty(display, DefaultRootWindow(display),
+                              XA_CUT_BUFFER0, 0, INT_MAX/4, False, req->target,
+                              &sevent.xselection.target, &seln_format,
+                              &nbytes, &overflow, &seln_data) == Success ) {
+                if ( sevent.xselection.target == req->target ) {
+                    if ( sevent.xselection.target == XA_STRING ) {
+                        if ( seln_data[nbytes-1] == '\0' )
+                            --nbytes;
+                    }
+                    XChangeProperty(display, req->requestor, req->property,
+                        sevent.xselection.target, seln_format, PropModeReplace,
+                                                            seln_data, nbytes);
+                    sevent.xselection.property = req->property;
+                }
+                XFree(seln_data);
+            }
+            XSendEvent(display, req->requestor, False, 0, &sevent);
+            XSync(display, False);
+        }
+        break;
+    }
+
+    /* Post the event for X11 clipboard reading above */
+    return(1);
+}
+void sdl_InitClipboard(void)
+{
+    SDL_SysWMinfo info;
+
+    /* See if we can use our X11 code on this driver */
+    SDL_VERSION(&info.version);
+    if ( SDL_GetWMInfo(&info) ) {
+        if ( info.subsystem == SDL_SYSWM_X11 ) {
+            /* Enable the special window hook events */
+            SDL_EventState(SDL_SYSWMEVENT, SDL_ENABLE);
+            SDL_SetEventFilter(clipboard_filter);
+        }
+    }
+}
+
+/* Put null-terminated text into the clipboard */
+void sdl_PutClipboard(const char *text)
+{
+    SDL_SysWMinfo info;
+
+    /* Save the clipboard text */
+    clipboard = (char *)realloc((void *)clipboard, strlen(text)+1);
+    strcpy(clipboard, text);
+
+    /* Try to put the text selection into the X server */
+    SDL_VERSION(&info.version);
+    if ( SDL_GetWMInfo(&info) ) {
+        if ( info.subsystem == SDL_SYSWM_X11 ) {
+            Display *display;
+            Window window;
+
+            info.info.x11.lock_func();
+            display = info.info.x11.display;
+            window = info.info.x11.window;
+            XChangeProperty(display, DefaultRootWindow(display),
+                            XA_CUT_BUFFER0, XA_STRING, 8, PropModeReplace,
+                            (unsigned char *)clipboard, strlen(clipboard));
+            if ( XGetSelectionOwner(display, XA_PRIMARY) != window )
+                XSetSelectionOwner(display, XA_PRIMARY, window, CurrentTime);
+            info.info.x11.unlock_func();
+        }
+    }
+}
+
+/* Get null-terminated text from the clipboard */
+const char *sdl_GetClipboard(void)
+{
+    SDL_SysWMinfo info;
+
+    /* Try to get a text selection from the X server */
+    SDL_VERSION(&info.version);
+    if ( SDL_GetWMInfo(&info) ) {
+        if ( info.subsystem == SDL_SYSWM_X11 ) {
+            Display *display;
+            Window window;
+            Window owner;
+            Atom selection;
+            Atom seln_type;
+            int seln_format;
+            unsigned long nbytes;
+            unsigned long overflow;
+            char *src;
+
+            info.info.x11.lock_func();
+            display = info.info.x11.display;
+            window = info.info.x11.window;
+            owner = XGetSelectionOwner(display, XA_PRIMARY);
+            if ( (owner == None) || (owner == window) ) {
+                owner = DefaultRootWindow(display);
+                selection = XA_CUT_BUFFER0;
+            } else {
+                int selection_converted;
+                XEvent xevent;
+
+                owner = window;
+                selection = XInternAtom(display, "SDL_SELECTION", False);
+                XConvertSelection(display, XA_PRIMARY, XA_STRING,
+                                                selection, owner, CurrentTime);
+                selection_converted = 0;
+                while ( ! selection_converted ) {
+                    // FIXME: What mask should we use here?
+                    //XMaskEvent(display, StructureNotifyMask, &xevent);
+                    XNextEvent(display, &xevent);
+                    if ( (xevent.type == SelectionNotify) &&
+                         (xevent.xselection.requestor == owner) ) {
+                        selection_converted = 1;
+                    }
+                }
+            }
+            if ( XGetWindowProperty(display, owner, selection, 0,
+                     INT_MAX/4, False, XA_STRING, &seln_type, &seln_format,
+                     &nbytes, &overflow, (unsigned char **)&src) == Success ) {
+                if ( src ) {
+                    if ( seln_type == XA_STRING ) {
+                        clipboard = (char *)realloc(clipboard, nbytes+1);
+                        memcpy(clipboard, src, nbytes);
+                        clipboard[nbytes] = '\0';
+                    }
+                    XFree(src);
+                }
+            }
+            info.info.x11.unlock_func();
+        }
+    }
+
+    /* Return the clipboard text */
+    if ( clipboard == NULL ) {
+        clipboard = (char *)malloc(1);
+        if ( clipboard ) {
+            *clipboard = '\0';
+        }
+    }
+    return(clipboard);
+}
+
 void sdl_RemapWindow(void)
 {
     SDL_SysWMinfo info;
@@ -313,28 +487,6 @@ void sdl_ConfineMouse(int on, int update)
     }
 }
 
-void sdl_AutoRaise(void)
-{
-    SDL_SysWMinfo info;
-
-    SDL_VERSION(&info.version);
-    if ( SDL_GetWMInfo(&info) ) {
-#ifdef unix
-        if ( info.subsystem == SDL_SYSWM_X11 ) {
-            Display *display;
-            Window window;
-
-            info.info.x11.lock_func();
-            display = info.info.x11.display;
-            window = info.info.x11.window;
-            XSetInputFocus(display, window, RevertToPointerRoot, CurrentTime);
-            info.info.x11.unlock_func();
-        }
-#else
-#error Need to implement these functions for other systems
-#endif // unix
-    }
-}
 
 #if 0  // This is dangerous to use, because it may be called when
        // the application is unmapped, causing a fatal X11 error.
