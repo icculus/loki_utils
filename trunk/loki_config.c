@@ -224,7 +224,7 @@ void loki_parseargs(int argc, char *argv[], const char *extra_help)
             case -1:
                 return;
             case 'v':
-                printf(game_version);
+                printf("%s", game_version);
                 printf("Built with glibc-%d.%d on %s\n",
                        __GLIBC__, __GLIBC_MINOR__, __DATE__);
                 exit(0);
