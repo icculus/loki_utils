@@ -1,0 +1,387 @@
+/*
+    Loki Game Utility Functions
+    Copyright (C) 1999  Loki Entertainment Software
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Library General Public
+    License as published by the Free Software Foundation; either
+    version 2 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Library General Public License for more details.
+
+    You should have received a copy of the GNU Library General Public
+    License along with this library; if not, write to the Free
+    Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+*/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <limits.h>
+#include <ctype.h>
+
+#include "loki_inifile.h"
+
+struct line {
+	char *key;
+	char *value;
+	char *comment;
+	struct line *next;
+};
+
+struct section {
+	char *name;
+	struct line *lines;
+	struct section *next;
+};
+
+struct _loki_ini_file_t {
+	FILE *fd;
+	char path[PATH_MAX];
+	struct section *sections;
+};
+
+enum status { _start, _section, _key, _value, _before_comment, _comment };
+
+static void free_section(struct section *s);
+
+static int isblank(char c)
+{
+	return (c == ' ') || (c == '\t');
+}
+
+static struct section *add_new_section(ini_file_t *ini)
+{
+	struct section *ret = (struct section *) malloc(sizeof(struct section));
+	if( ! ret ) {
+		perror("malloc");
+		return NULL;
+	}
+	ret->next = NULL;
+	ret->lines = NULL;
+	ret->name = NULL;
+	if( ini->sections ) {
+		struct section *ins = ini->sections;
+		while ( ins->next )
+			ins = ins->next;
+		ins->next = ret;
+	} else {
+		ini->sections = ret;
+	}
+
+	return ret;
+}
+
+static struct line *add_new_line(struct section *s)
+{
+	struct line *ret = (struct line *) malloc(sizeof(struct line));
+	if( ! ret ) {
+		perror("malloc");
+		return NULL;
+	}
+	ret->key = ret->value = ret->comment = NULL;
+	ret->next = NULL;
+	if( s->lines ) {
+		struct line *ins = s->lines;
+		while ( ins->next )
+			ins = ins->next;
+		ins->next = ret;
+	} else {
+		s->lines = ret;
+	}
+
+	return ret;
+}
+
+/* Removes the trailing spaces */
+static void trim_spaces(char *str)
+{
+	if ( str && *str ) { /* At least one char */
+		char *ptr = str + strlen(str) - 1;
+
+		for ( ; ptr > str; -- ptr ) {
+			if ( !isblank(*ptr) ) {
+				*(ptr + 1) = '\0';
+				return;
+			}
+		}
+	}
+}
+
+/* Open and loads the INI file, returns error code */
+ini_file_t *loki_openinifile(const char *path)
+{
+	char buf[1024], c, *ptr = NULL;
+	enum status st = _start;
+	struct section *s = NULL;
+	struct line *l = NULL;
+	int line_number = 1;
+	ini_file_t *ini;
+
+	ini = malloc(sizeof(ini_file_t));
+
+	if( ! ini )
+		return NULL;
+
+	ini->sections = NULL;
+	ini->fd = fopen(path, "rb");
+	if( ! ini->fd ) {
+		free(ini);
+		return NULL;
+	}
+	strncpy(ini->path, path, PATH_MAX);
+
+	s = add_new_section(ini); /* Top level section, can only contain comment lines */
+
+	/* Parse the file */
+	while ( (c = fgetc(ini->fd)) != EOF ) {
+		switch(st) {
+		case _start: /* Start of line */
+			ptr = buf;
+			switch(c){
+			case '\r':
+				break;
+			case '\n':
+				l = add_new_line(s);
+				++ line_number;
+				break;
+			case ';': case '#':
+				l = add_new_line(s);
+				st = _comment; break;
+			case '[':
+				st = _section;
+				s = add_new_section(ini);
+				break;
+			default:
+				if ( isblank(c) ) {
+					break;
+				} else if ( ! s->name ) {
+					fprintf(stderr,"Parse error at beginning of %s INI file (line %d)!\n", path, line_number);
+					free_section(ini->sections);
+					free(ini);
+					return 0;
+				} else {
+					l = add_new_line(s);
+					*ptr ++ = c;
+					st = _key;
+				}
+				break;
+			}
+			break;
+		case _section:
+			if ( c == ']' ) {
+				*ptr = '\0';
+				s->name = strdup(buf);
+				ptr = buf;
+				st = _before_comment;
+			} else {
+				*ptr ++ = c;
+			}
+			break;
+		case _key:
+			if ( c == '=' ) {
+				*ptr = '\0';
+				l->key = strdup(buf);
+				ptr = buf;
+				st = _value;
+			} else if ( c == '\n' || c == '\r' ) {
+				fprintf(stderr,"Parse error in %s on line %d\n", path, line_number);
+				free_section(ini->sections);
+				free(ini);
+				return 0;
+			} else {
+				*ptr ++ = c;
+			}
+			break;
+		case _value:
+			if ( c == ';' || c == '#' ) {
+				*ptr = '\0';
+				trim_spaces(buf);
+				l->value = strdup(buf);
+				ptr = buf;
+				st = _comment;
+			} else if ( c == '\n' ) {
+				*ptr = '\0';
+				trim_spaces(buf);
+				l->value = strdup(buf);
+				ptr = buf;
+				++ line_number;
+				st = _start;
+			} else if ( c != '\r' ) {
+				*ptr ++ = c;
+			}
+			break;
+		case _before_comment:
+			if ( c == ';' || c == '#' ) {
+				st = _comment;
+			} else if ( c == '\n' ) {
+				st = _start;
+			}
+			break;
+		case _comment: /* Till the end of line */
+			if(c == '\n' ) {
+				*ptr = '\0';
+				if ( ! l ) {
+					l = add_new_line(s);
+				}
+				l->comment = strdup(buf);
+				ptr = buf;
+				++ line_number;
+				st = _start;
+			} else if ( c != '\r' ) {
+				*ptr ++ = c;
+			}
+			break;
+		}
+	}
+	return ini;
+}
+
+/* Recursive functions to free the linked lists */
+static void free_line(struct line *l)
+{
+	if ( l ) {
+		free_line( l->next );
+
+		free(l->key);
+		free(l->value);
+		free(l->comment);
+		free(l);
+	}
+}
+
+static void free_section(struct section *s)
+{
+	if ( s ) {
+		free_section( s->next );
+
+		free(s->name);
+		free_line(s->lines);
+		free(s);
+	}
+}
+
+/* Close the INI file, returns error code */
+int loki_closeinifile(ini_file_t *ini)
+{
+	if(ini->fd) {
+		fclose(ini->fd);
+		ini->fd = NULL;
+	}
+
+	/* Free all the allocated memory */
+	free_section(ini->sections);
+
+	free(ini);
+
+	return 1;
+}
+
+/* Return the string corresponding to a key in the specified section of the file,
+   returns NULL if could not find it */
+const char *loki_getinistring(ini_file_t *ini, const char *section, const char *key)
+{
+	struct section *s;
+
+	for ( s = ini->sections ; s ; s = s->next ) {
+		if ( s->name && ! strcasecmp(section, s->name) ) {
+			struct line *l;
+			for ( l = s->lines; l ; l = l->next ) {
+				if ( l->key && ! strcasecmp(key, l->key) ) {
+					return l->value;
+				}
+			}
+		}
+	}
+	return NULL;
+}
+
+/* Add or modify a keyed value in the INI file, returns error code */
+int loki_putinistring(ini_file_t *ini, const char *section, const char *key, const char *value)
+{
+	struct section *s;
+
+	for ( s = ini->sections ; s ; s = s->next ) {
+		if ( s->name && ! strcasecmp(section, s->name) ) {
+			struct line *l;
+			for ( l = s->lines; l ; l = l->next ) {
+				if ( l->key && ! strcasecmp(key, l->key) ) {
+					/* Replace existing value */
+					free(l->value);
+					l->value = strdup(value);
+					return 1;
+				}
+			}
+			if ( ! l ) {
+				/* Create new keyed value */
+				l = add_new_line(s);
+				l->key = key ? strdup(key) : NULL;
+				l->value = value ? strdup(value) : NULL;
+				return 1;
+			}
+		}
+	}
+	if ( ! s ) {
+		struct line *l;
+		/* Create new section and key */
+		s = add_new_section(ini);
+		s->name = section ? strdup(section) : NULL;
+
+		l = add_new_line(s);
+		l->key = key ? strdup(key) : NULL;
+		l->value = value ? strdup(value) : NULL;
+		return 1;
+	}
+	return 0;
+}
+
+/* Write the INI file back to disk, returns error code */
+int loki_writeinifile(ini_file_t *ini, const char *path)
+{
+	struct section *s = ini->sections;
+	FILE *fd;
+
+	if ( path ) {
+		fd = fopen(path, "wb");
+		if ( ! fd ) {
+			perror("fopen");
+			return 0;
+		}
+	} else {
+		if ( ini->fd ) {
+			fclose(ini->fd);
+			ini->fd = fopen(ini->path, "wb");
+			if( ! ini->fd ) {
+				perror("fopen");
+				return 0;
+			}
+		}
+		fd = ini->fd;
+	}
+
+	rewind(fd);
+	for ( ; s ; s = s->next ) {
+		struct line *l;
+		if( s->name ) {
+			fprintf(fd, "[%s]\n", s->name);
+		}
+		for ( l = s->lines; l ; l = l->next ) {
+			if ( l->key ) {
+				fprintf(fd, "%s=", l->key);
+				if ( l->value ) {
+					fprintf(fd, "%s", l->value);
+				}
+				fputc(' ', fd);
+			}
+			if ( l->comment ) {
+				fprintf(fd, ";%s", l->comment);
+			}
+			fputc('\n', fd);
+		}
+	}
+
+	return 1;
+}

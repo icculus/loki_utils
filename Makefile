@@ -31,7 +31,7 @@ endif
 CXXFLAGS = $(CFLAGS)
 .SUFFIXES: .c .cpp
 
-CSRC	= loki_config.c loki_network.c loki_paths.c loki_signals.c loki_utils.c
+CSRC	= loki_config.c loki_network.c loki_paths.c loki_signals.c loki_utils.c loki_inifile.c
 CPPSRC	= 
 ifneq ($(sdl_utils), false)
 CSRC	+= sdl_pcx.c
@@ -50,6 +50,9 @@ TARGET = libloki.a
 
 $(TARGET): $(OBJS)
 	$(AR) $(TARGET) $(OBJS)
+
+testini: testini.c
+	$(CC) $(CFLAGS) -o testini testini.c -L. -lloki
 
 clean:
 	rm -f $(OBJS) $(TARGET)
