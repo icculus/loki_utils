@@ -94,7 +94,7 @@ static void catch_signal(int sig)
             break;
         case SIGSEGV:
             fprintf(stderr, "BUG! (Segmentation Fault)  Going down hard...\n");
-            { extern char game_version[];
+            { extern char *game_version;
                 fprintf(stderr, "%s", game_version);
                 fprintf(stderr, "Built with glibc-%d.%d\n",
                         __GLIBC__, __GLIBC_MINOR__);
