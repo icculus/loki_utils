@@ -93,21 +93,21 @@ void loki_configdefault( const char* dflt )
 {
 
     if( loki_config_default ) {
-		free( loki_config_default );
-		loki_config_default = NULL;
+        free( loki_config_default );
+        loki_config_default = NULL;
     }
 
     if( dflt ) {
-		int length = strlen( dflt );
-		loki_config_default = (char*) malloc( length + 1 );
-		
-		if( loki_config_default ) {
-			strncpy( loki_config_default, dflt, length );
-			loki_config_default[length] = '\0';
-		}
-		
+        int length = strlen( dflt );
+        loki_config_default = (char*) malloc( length + 1 );
+        
+        if( loki_config_default ) {
+            strncpy( loki_config_default, dflt, length );
+            loki_config_default[length] = '\0';
+        }
+        
     }
-	
+    
 }
 
 void loki_insertconfig(const char *key, const char *value)
@@ -122,25 +122,25 @@ void loki_insertconfig(const char *key, const char *value)
         }
     }
     if ( pip ) {  /* Replace existing entry */
-		if ( value ) {
-			pip->value = (char *)realloc(pip->value, strlen(value)+1);
-			strcpy(pip->value, value);
-		} else {
-			pip->value = NULL;
-		}
+        if ( value ) {
+            pip->value = (char *)realloc(pip->value, strlen(value)+1);
+            strcpy(pip->value, value);
+        } else {
+            pip->value = NULL;
+        }
     } else {
         pip = (config_element *)malloc(sizeof *pip);
         assert(pip);
         pip->key = (char *)malloc(strlen(key)+1);
         assert(pip->key);
         strcpy(pip->key, key);
-		if ( value ) {
-			pip->value = (char *)malloc(strlen(value)+1);
-			assert(pip->value);
-			strcpy(pip->value, value);
-		} else {
-			pip->value = NULL;
-		}
+        if ( value ) {
+            pip->value = (char *)malloc(strlen(value)+1);
+            assert(pip->value);
+            strcpy(pip->value, value);
+        } else {
+            pip->value = NULL;
+        }
         pip->next = NULL;
 
         if ( last ) {
@@ -156,20 +156,20 @@ ini_file_t * loki_createinifile_internal(const char *path, int userreg);
 
 static void loki_parseconfig(const char *file)
 {
-	ini_file_t *ini = loki_openinifile_internal(file, 1);
-	
-	if ( ini ) {
-		const char *key, *value;
-		ini_line_t *line = loki_begin_iniline(ini, NULL);
-		if ( line ) {
-			do {
-				if ( loki_get_iniline(line, &key, &value) ) {
-					loki_insertconfig(key, value);
-				}
-			} while( loki_next_iniline(line) );
-		}
-		loki_closeinifile(ini);
-	}
+    ini_file_t *ini = loki_openinifile_internal(file, 1);
+    
+    if ( ini ) {
+        const char *key, *value;
+        ini_line_t *line = loki_begin_iniline(ini, NULL);
+        if ( line ) {
+            do {
+                if ( loki_get_iniline(line, &key, &value) ) {
+                    loki_insertconfig(key, value);
+                }
+            } while( loki_next_iniline(line) );
+        }
+        loki_closeinifile(ini);
+    }
 }
 
 /* This function loads Loki-specific configuration values from 
@@ -199,17 +199,17 @@ void loki_initconfig(void)
 /* Creates an INI file with a dump of the current configuration */
 void loki_writeconfig(const char *file)
 {
-	ini_file_t *ini = loki_createinifile_internal(file, 0);
+    ini_file_t *ini = loki_createinifile_internal(file, 0);
 
-	if ( ini ) {
-		config_element *pip;
+    if ( ini ) {
+        config_element *pip;
 
-		for ( pip=config_list; pip; pip=pip->next ) {
-			loki_putinistring(ini, NULL, pip->key, pip->value);
-		}
-		loki_writeinifile(ini, file);
-		loki_closeinifile(ini);
-	}
+        for ( pip=config_list; pip; pip=pip->next ) {
+            loki_putinistring(ini, NULL, pip->key, pip->value);
+        }
+        loki_writeinifile(ini, file);
+        loki_closeinifile(ini);
+    }
 }
 
 /* Make this easier to change from the application code */
@@ -232,10 +232,10 @@ void loki_printusage(char *argv0, const char *help_text)
     printf("Linux version by Loki Entertainment Software\n");
     printf("http://www.lokigames.com/\n");
     if ( loki_demo ) {
-		printf("Technical support is only available with the full game\n");
+        printf("Technical support is only available with the full game\n");
     } else {
-		printf("Support - Phone:  1-714-508-2140 (9-5 PM US Pacific Time)\n"
-			   "          E-mail: support@lokigames.com\n");
+        printf("Support - Phone:  1-714-508-2140 (9-5 PM US Pacific Time)\n"
+               "          E-mail: support@lokigames.com\n");
     }
     printf("\n");
     printf("Usage: %s [options]\n", argv0);
@@ -291,17 +291,17 @@ void loki_registeroption_as(const char *lng, char sht, const char *comment, loki
 
     long_options[nb_options].name = strdup(lng); /* Needs to be free()'d at some point */
     long_options[nb_options].flag = NULL;
-	optional[nb_options] = 0;
-	switch(t) {
-	case LOKI_OPTSTRING:
-	  optional[nb_options] = 1;
-	case LOKI_STRING:
-	  long_options[nb_options].has_arg = required_argument;
-	  break;
-	case LOKI_BOOLEAN:
-	  long_options[nb_options].has_arg = no_argument;
-	  break;
-	}
+    optional[nb_options] = 0;
+    switch(t) {
+    case LOKI_OPTSTRING:
+      optional[nb_options] = 1;
+    case LOKI_STRING:
+      long_options[nb_options].has_arg = required_argument;
+      break;
+    case LOKI_BOOLEAN:
+      long_options[nb_options].has_arg = no_argument;
+      break;
+    }
     long_options[nb_options].val = sht;
     option_comment[nb_options] = comment;
     nb_options ++;
@@ -320,22 +320,22 @@ void loki_parseargs(int argc, char *argv[], const char *extra_help)
    
     for(i=0, j=1; i<nb_options; i++) {
         if (long_options[i].val != '\0') {
-			short_options[j++] = long_options[i].val;
-			if ( long_options[i].has_arg > 0 ) {
-				short_options[j++] = ':';
-			}
-		}
-	}
+            short_options[j++] = long_options[i].val;
+            if ( long_options[i].has_arg > 0 ) {
+                short_options[j++] = ':';
+            }
+        }
+    }
     short_options[j] = '\0';
 
-	opterr = 0;
+    opterr = 0;
     while (1) {  /* Loop terminates when getopt returns -1 and we return */
         int c, i;
 
         c = getopt_long_only(argc, argv, short_options, long_options, NULL);
         switch (c) {
             case -1:
-			    remaining_args = &argv[optind];
+                remaining_args = &argv[optind];
                 return;
             case 'v':
                 printf("%s", game_version);
@@ -345,28 +345,28 @@ void loki_parseargs(int argc, char *argv[], const char *extra_help)
                 loki_printusage(argv[0], extra_help);
                 exit(0);
                 break;              
-		    case ':': /* Argument missing error */
+            case ':': /* Argument missing error */
                 for ( i=0; long_options[i].name; ++i ) {
                     if ( optopt == long_options[i].val ) {
-						if(optional[i]) {
-							loki_insertconfig(long_options[i].name, NULL);
-						} else {
-							fprintf(stderr,"ERROR: Missing argument for option -%c\n", optopt);
-						}
-					}
-				}
-				break;
+                        if(optional[i]) {
+                            loki_insertconfig(long_options[i].name, NULL);
+                        } else {
+                            fprintf(stderr,"ERROR: Missing argument for option -%c\n", optopt);
+                        }
+                    }
+                }
+                break;
             default:
                 for ( i=0; long_options[i].name; ++i ) {
                     if ( c == long_options[i].val ) {
-						switch ( long_options[i].has_arg ) {
-						case required_argument:
-							loki_insertconfig(long_options[i].name, optarg);
-							break;
-						case no_argument:
-							loki_insertconfig(long_options[i].name, "1");
-							break;
-						}
+                        switch ( long_options[i].has_arg ) {
+                        case required_argument:
+                            loki_insertconfig(long_options[i].name, optarg);
+                            break;
+                        case no_argument:
+                            loki_insertconfig(long_options[i].name, "1");
+                            break;
+                        }
                         break;
                     }
                 }
@@ -428,21 +428,21 @@ int loki_getconfig_bool(const char *key)
      * Otherwise, return true.
      */
     if( value ) {
-		if( !strcasecmp( value, "false" ) ) {
-			retval = 0;
-		} else if( !strcasecmp( value, "no" ) ) {
-			retval = 0;
-		} else if( !strcasecmp( value, "off" ) ) {
-			retval = 0;
-		} else if( !strcasecmp( value, "0" ) ) {
-			retval = 0;
-		} else if ( !strcasecmp( value, "" ) ) {
-			retval = 0;
-		} else {
-			retval = 1;
-		}
+        if( !strcasecmp( value, "false" ) ) {
+            retval = 0;
+        } else if( !strcasecmp( value, "no" ) ) {
+            retval = 0;
+        } else if( !strcasecmp( value, "off" ) ) {
+            retval = 0;
+        } else if( !strcasecmp( value, "0" ) ) {
+            retval = 0;
+        } else if ( !strcasecmp( value, "" ) ) {
+            retval = 0;
+        } else {
+            retval = 1;
+        }
     } else {
-		retval = 0;
+        retval = 0;
     }
 
     return retval;
@@ -456,9 +456,9 @@ int loki_getconfig_int(const char *key)
     value = loki_getconfig_str(key);
 
     if( value ) {
-		return atoi( value );
+        return atoi( value );
     } else {
-		return 0;
+        return 0;
     }
 
 }
@@ -470,18 +470,18 @@ double loki_getconfig_float(const char *key)
 
     value = loki_getconfig_str(key);
     if( value ) {
-		return atof( value );
+        return atof( value );
     } else {
-		return 0.0;
+        return 0.0;
     }
 }
 
 /* This function returns an optional string value from the configuration */
 int loki_getconfig_optstr(const char *key, const char **str)
 {
-	/* This may look like we're duplicating code but actually we need to
-	   check for the actual presence of the key instead of defaulting to
-	   a null string value */
+    /* This may look like we're duplicating code but actually we need to
+       check for the actual presence of the key instead of defaulting to
+       a null string value */
 
     config_element *pip;
 
@@ -493,9 +493,9 @@ int loki_getconfig_optstr(const char *key, const char **str)
     }
     if ( pip ) {
         *str = pip->value;
-		return 1;
+        return 1;
     } else {
-		*str = NULL;
-		return 0;
+        *str = NULL;
+        return 0;
     }
 }
