@@ -18,39 +18,80 @@
 */
 
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include "loki_utils.h"
 
 #define QAGENT	"loki_qagent"
+#define UPDATE	"loki_update"
 
 void loki_runqagent(const char *stack_trace_file)
 {
 	int i;
-	const char *argv[16];
+	const char *args[16];
 
 	/* Build the command line for the QAgent script */
 	i = 0;
-	argv[i++] = QAGENT;
-	argv[i++] = "--product_name";
-	argv[i++] = loki_getgamename();
-	argv[i++] = "--product_version";
-	argv[i++] = loki_getgameversion();
-	argv[i++] = "--product_desc";
-	argv[i++] = loki_getgamedescription();
-	argv[i++] = "--product_data";
-	argv[i++] = loki_getdatapath();
-	argv[i++] = "--product_prefs";
-	argv[i++] = loki_getprefpath();
-	argv[i++] = "--product_cdrom";
-	argv[i++] = loki_getcdrompath();
+	args[i++] = QAGENT;
+	args[i++] = "--product_name";
+	args[i++] = loki_getgamename();
+	args[i++] = "--product_version";
+	args[i++] = loki_getgameversion();
+	args[i++] = "--product_desc";
+	args[i++] = loki_getgamedescription();
+	args[i++] = "--product_path";
+	args[i++] = loki_getdatapath();
+	args[i++] = "--product_prefs";
+	args[i++] = loki_getprefpath();
+	args[i++] = "--product_cdrom";
+	args[i++] = loki_getcdrompath();
 	if ( stack_trace_file && *stack_trace_file ) {
-		argv[i++] = "--game_stack";
-		argv[i++] = stack_trace_file;
+		args[i++] = "--stack_trace";
+		args[i++] = stack_trace_file;
 	}
-	argv[i] = 0;
+	args[i] = 0;
 
 	/* Run it, and complain if we can't */
-	execvp(QAGENT, argv);
+	execvp(QAGENT, args);
 	fprintf(stderr, "Unable to execute " QAGENT " - exiting\n");
+	_exit(-1);
+}
+
+void loki_runupdate(int argc, char *argv[])
+{
+	int i, j;
+	const char *args[1024];
+
+	/* Build the command line for the update script */
+	i = 0;
+	args[i++] = UPDATE;
+	args[i++] = "--product_name";
+	args[i++] = loki_getgamename();
+	args[i++] = "--product_version";
+	args[i++] = loki_getgameversion();
+	args[i++] = "--product_desc";
+	args[i++] = loki_getgamedescription();
+	args[i++] = "--product_path";
+	args[i++] = loki_getdatapath();
+	args[i++] = "--product_prefs";
+	args[i++] = loki_getprefpath();
+	args[i++] = "--product_cdrom";
+	args[i++] = loki_getcdrompath();
+
+	/* Add the original command line, if desired */
+	args[i++] = "--";
+	for ( j=0; j<argc; ++j ) {
+		/* Strip out the auto-update options */
+		if ( (strcmp(argv[j], "-u") == 0) ||
+		     (strcmp(argv[j], "--update") == 0) ) {
+			continue;
+		}
+		args[i++] = argv[j];
+	}
+	args[i] = 0;
+
+	/* Run it, and complain if we can't */
+	execvp(UPDATE, args);
+	fprintf(stderr, "Unable to execute " UPDATE " - exiting\n");
 	_exit(-1);
 }
