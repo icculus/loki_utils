@@ -65,6 +65,17 @@ extern void loki_signalcleanup(void (*cleanup)(void));
 */
 extern void loki_runqagent(const char *stack_trace_file);
 
+/* This function runs the Loki update agent and never returns.
+   The update agent should verify the installed version, possibly
+   update the install, and prompt to restart the game.
+
+   If argc and argv are non-zero, the game will be restarted with
+   the given options after the update process is complete.  The '-u'
+   and '--update' options are stripped out before being passed to
+   the update agent.
+*/
+extern void loki_runupdate(int argc, char *argv[]);
+
 /* This function simulates a debugger breakpoint (crashes if not in GDB!) */
 #ifndef NDEBUG
 #ifdef __i386

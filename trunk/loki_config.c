@@ -37,9 +37,9 @@
 
 /* How many builtin options ? */
 #ifndef WINDOWED_ONLY
-#define COMMON_OPTIONS 7
+#define COMMON_OPTIONS 8
 #else
-#define COMMON_OPTIONS 5
+#define COMMON_OPTIONS 6
 #endif
 
 /* This is a list of general configuration parameters in userprofile.txt
@@ -55,6 +55,7 @@ static struct option long_options[MAX_OPTIONS+1] =
 #endif
   { "nosound",     0, 0, 's' },
   { "nocdrom",     0, 0, 'c' },
+  { "update",      0, 0, 'u' },
   { "qagent",      0, 0, 'q' },
   { NULL,          0, 0,  0  }
 };
@@ -70,6 +71,7 @@ static const char *option_comment[MAX_OPTIONS] =
 #endif
     "Do not access the soundcard",
     "Do not access the CD-ROM",
+    "Run the Loki auto-update tool",
     "Run the Loki QAgent support tool",
     NULL,
 };
@@ -228,21 +230,25 @@ static void loki_parseconfig(const char *file)
 void loki_initconfig(void)
 {
     char *home;
+    char configfile[PATH_MAX];
 
     /* Set initial value. */
     loki_configdefault( "" );
 
+    /* Load defaults from game-wide config */
     home = loki_gethomedir();
     if ( home != NULL ) {
-        char configfile[PATH_MAX];
-
         sprintf(configfile, "%s/.loki/%s", home, CONFIG_FILENAME);
         loki_parseconfig(configfile);
-        sprintf(configfile, "%s/%s", loki_getdatapath(), CONFIG_FILENAME);
-        loki_parseconfig(configfile);
-        sprintf(configfile, "%s/%s", loki_getprefpath(), CONFIG_FILENAME);
-        loki_parseconfig(configfile);
     }
+
+    /* Load game-specific default config */
+    sprintf(configfile, "%s/%s", loki_getdatapath(), CONFIG_FILENAME);
+    loki_parseconfig(configfile);
+
+    /* Load the user's own overrides */
+    sprintf(configfile, "%s/%s", loki_getprefpath(), CONFIG_FILENAME);
+    loki_parseconfig(configfile);
 }
 
 /* Creates an INI file with a dump of the current configuration */
@@ -385,6 +391,9 @@ void loki_parseargs(int argc, char *argv[], const char *extra_help)
             case -1:
                 remaining_args = &argv[optind];
                 return;
+            case 'u':
+                loki_runupdate(0, 0);
+                exit(0);
             case 'q':
                 loki_runqagent(NULL);
                 exit(0);
