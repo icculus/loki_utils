@@ -46,7 +46,7 @@ void loki_initialize_noparse(int argc, char *argv[])
 */
 void loki_initialize(int argc, char *argv[], const char *extra_help)
 {
-	loki_initialize_noparse(argc, argv);
+    loki_initialize_noparse(argc, argv);
 
     /* Handle command line parsing */
     loki_parseargs(argc, argv, extra_help);
@@ -61,9 +61,9 @@ void loki_acquireroot(void)
 {
   if(!root_cnt){
 #ifdef DEBUG_SETUID
-	fprintf(stderr,"Switching to root\n");
+    fprintf(stderr,"Switching to root\n");
 #endif
-	seteuid(0);
+    seteuid(0);
   }
   root_cnt ++;
 }
@@ -71,11 +71,11 @@ void loki_acquireroot(void)
 void loki_releaseroot(void)
 {
   if(root_cnt > 0)
-	root_cnt --;
+    root_cnt --;
   if(!root_cnt){
 #ifdef DEBUG_SETUID
-	fprintf(stderr,"Switching to user\n");
+    fprintf(stderr,"Switching to user\n");
 #endif
-	seteuid(getuid());
+    seteuid(getuid());
   }
 }

@@ -17,8 +17,13 @@
     Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
+#include <sys/types.h>
 #include <stdlib.h>
+#include <stdarg.h>
+#include <limits.h>
+#include <fcntl.h>
 #include <stdio.h>
+#include <string.h>
 #include <features.h>
 #if (__GLIBC__ >= 2)
 #if (__GLIBC__ != 2) || (__GLIBC_MINOR__ >= 1)
@@ -35,10 +40,32 @@
 
 static void (*signal_cleanup)(void) = NULL;
 
+/* Print a message to crash log and standard error.
+   This may run while the heap is corrupted, so don't use malloc() and friends.
+*/
+static void print_crash(int log, const char *fmt, ...)
+{
+    char string[4096];
+    int len;
+    va_list ap;
+
+    va_start(ap, fmt);
+    len = vsnprintf(string, sizeof(string), fmt, ap);
+    va_end(ap);
+    if ( len > 0 ) {
+        if ( log >= 0 ) {
+            write(log, string, len);
+        }
+        write(2, string, len);
+    }
+}
+
 // Try to clean up gracefully on a signal, and terminate us if we fail
 static void catch_signal(int sig)
 {
     static int cleaning_up = 0;
+    /* Don't malloc the path since heap may be corrupted */
+    static char logfile[PATH_MAX] = { 0 };
 
     if ( cleaning_up ) {
         // We received a signal during cleanup, probably due to unstable state
@@ -55,68 +82,69 @@ static void catch_signal(int sig)
             fprintf(stderr, "Caught signal in cleanup -- aborting\n");
             break;
         }
-#if 0
-        // Kill all threads with no chance of surviving.
-    // This kills the X session when run from the GNOME panel
-    // since the X session is in the same process group.
-        do {
-            kill(0, SIGKILL);
-        } while ( 1 );
-#else
-    _exit(-1);
-#endif
-        // Not reached -- we died just now.
     } else {
+        int log;
+
         cleaning_up = 1;
-        fprintf(stderr, "\n");
+
+        /* Create a log of the crash - write directly to it */
+        if ( *loki_getprefpath() ) {
+            strcpy(logfile, loki_getprefpath());
+            strcat(logfile, "/stack-trace.txt");
+        }
+        log = open(logfile, O_WRONLY|O_CREAT|O_TRUNC, 0644);
+
+        print_crash(log, "\n");
         switch (sig) {
         case SIGHUP:
-            fprintf(stderr, "Hangup signal caught, cleaning up.\n");
+            print_crash(log, "Hangup signal caught, cleaning up.\n");
             break;
         case SIGQUIT:
-            fprintf(stderr, "Interrupt signal caught, cleaning up.\n");
+            print_crash(log, "Interrupt signal caught, cleaning up.\n");
             break;
         case SIGABRT:
-            fprintf(stderr, "BUG!  Assertion failed, cleaning up.\n");
+            print_crash(log, "BUG!  Assertion failed, cleaning up.\n");
             { extern char *game_version;
-                fprintf(stderr, "%s", game_version);
-                fprintf(stderr, "Built with glibc-%d.%d\n",
+                print_crash(log, "%s", game_version);
+                print_crash(log, "Built with glibc-%d.%d\n",
                         __GLIBC__, __GLIBC_MINOR__);
             }
 #ifdef LINUX_BETA
             fprintf(stderr, "Please file a full bug report in Fenris,\n"
-					"at http://fenris.lokigames.com/\n");
+                    "at http://fenris.lokigames.com/\n");
 #else
             fprintf(stderr, "Please send the text of the failed assertion,\n"
                     "along with the contents of autosave to: support@lokigames.com\n");
 #endif
             break;
         case SIGSEGV:
-            fprintf(stderr, "BUG! (Segmentation Fault)  Going down hard...\n");
+            print_crash(log, "BUG! (Segmentation Fault)  Going down hard...\n");
             { extern char *game_version;
-                fprintf(stderr, "%s", game_version);
-                fprintf(stderr, "Built with glibc-%d.%d\n",
+                print_crash(log, "%s", game_version);
+                print_crash(log, "Built with glibc-%d.%d\n",
                         __GLIBC__, __GLIBC_MINOR__);
             }
 #ifdef HAS_EXECINFO
             { 
-				void *array[64]; int size, i;
-				char **syms;
-                fprintf(stderr, "Stack dump:\n");
-                fprintf(stderr, "{\n");
+                void *array[64]; int size, i;
+#if 0 /*(__GLIBC__ > 2) || ((__GLIBC__ == 2) && (__GLIBC_MINOR__ >= 1))*/
+                char **syms;
+#endif
+                print_crash(log, "Stack dump:\n");
+                print_crash(log, "{\n");
                 size = backtrace(array, (sizeof array)/(sizeof array[0]));
-#if (__GLIBC__ > 2) || ((__GLIBC__ == 2) && (__GLIBC_MINOR__ >= 1))
-				syms = backtrace_symbols(array, size);
-                for ( i=0; i<size; ++i ) {
-                    fprintf(stderr, "\t%s\n", syms[i]);
+#if 0 /*(__GLIBC__ > 2) || ((__GLIBC__ == 2) && (__GLIBC_MINOR__ >= 1))*/
+                syms = backtrace_symbols(array, size);
+                for ( i=2; i<size; ++i ) {
+                    print_crash(log, "\t%s\n", syms[i]);
                 }
+                free(syms);
 #else
-                for ( i=0; i<size; ++i ) {
-                    fprintf(stderr, "\t%p\n", array[i]);
+                for ( i=2; i<size; ++i ) {
+                    print_crash(log, "\t%p\n", array[i]);
                 }
 #endif
-                fprintf(stderr, "}\n");
-				free(syms);
+                print_crash(log, "}\n");
             }
 #else
 #warning Stack dump disabled.
@@ -124,32 +152,31 @@ static void catch_signal(int sig)
 
 #ifdef LINUX_BETA
             fprintf(stderr, "Please file a full bug report in Fenris,\n"
-					"at http://fenris.lokigames.com/\n");
+                    "at http://fenris.lokigames.com/\n");
 #else
             fprintf(stderr, "Please send a full bug report,\n"
                     "along with the contents of autosave to: support@lokigames.com\n");
 #endif
+            break;
 
-#if 0 // bk991008 - kills Gnome, see above
-            // Now kill any outstanding threads (network, etc.)
-            do {
-                kill(0, SIGKILL);
-            } while ( 1 );
-#else
-            _exit(-1);
-#endif //bk991008
-
-            // Not reached -- we died just now.
         default:
-            fprintf(stderr, "Unknown signal (%d) caught, cleaning up.\n", sig);
+            print_crash(log, "Unknown signal (%d) caught, cleaning up.\n", sig);
             break;
         }
+
+        /* Close the log file */
+        if ( log >= 0 ) {
+            close(log);
+        }
+
         /* Cleanup after catching fatal signal */
         if ( signal_cleanup ) {
             signal_cleanup();
         }
     }
-    exit(sig);
+
+    /* Run the Loki support QAgent */
+    loki_runqagent(logfile);
 }
 
 void loki_initsignals(void)
@@ -175,6 +202,6 @@ void loki_signalcleanup(void (*cleanup)(void))
 #ifndef __i386
 void loki_breakdebugger(void)
 {
-	raise(SIGTRAP);
+    raise(SIGTRAP);
 }
 #endif

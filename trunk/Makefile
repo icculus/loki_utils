@@ -37,7 +37,8 @@ endif
 CXXFLAGS = $(CFLAGS)
 .SUFFIXES: .c .cpp
 
-CSRC	= loki_config.c loki_network.c loki_paths.c loki_signals.c loki_utils.c loki_inifile.c loki_cpuinfo.c
+CSRC	= loki_config.c loki_network.c loki_paths.c loki_signals.c \
+          loki_qagent.c loki_utils.c loki_inifile.c loki_cpuinfo.c
 CPPSRC	= 
 ifneq ($(sdl_utils), false)
 CSRC	+= sdl_pcx.c
