@@ -10,9 +10,7 @@ CC = gcc
 CXX = g++
 AR = ar rcs
 
-
 CFLAGS += -Wall
-INCLUDES =  -I/usr/local/include/SDL
 CFLAGS += $(INCLUDES)
 ifeq ($(DEBUG),true)
 CFLAGS += -g -O
@@ -43,6 +41,7 @@ CPPSRC	=
 ifneq ($(sdl_utils), false)
 CSRC	+= sdl_pcx.c
 CPPSRC	+= sdl_utils.cpp
+CFLAGS  += $(shell sdl-config --cflags)
 endif
 
 OBJS := $(CSRC:.c=.o) $(CPPSRC:.cpp=.o) 
