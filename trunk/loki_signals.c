@@ -106,8 +106,8 @@ static void catch_signal(int sig)
         case SIGABRT:
             print_crash(log, "BUG!  Exception triggered, cleaning up.\n");
             print_crash(log, "%s\n", loki_getgamedescription());
-            print_crash(log, "Built with glibc-%d.%d\n",
-                        __GLIBC__, __GLIBC_MINOR__);
+            print_crash(log, "Built with glibc-%d.%d on %s\n",
+                        __GLIBC__, __GLIBC_MINOR__, loki_getarch());
             fatal_crash = 1;
 #ifdef LINUX_BETA
             fprintf(stderr, "Please file a full bug report in Fenris,\n"
@@ -120,8 +120,8 @@ static void catch_signal(int sig)
         case SIGSEGV:
             print_crash(log, "BUG! (Segmentation Fault)  Going down hard...\n");
             print_crash(log, "%s\n", loki_getgamedescription());
-            print_crash(log, "Built with glibc-%d.%d\n",
-                        __GLIBC__, __GLIBC_MINOR__);
+            print_crash(log, "Built with glibc-%d.%d on %s\n",
+                        __GLIBC__, __GLIBC_MINOR__, loki_getarch());
 #ifdef HAS_EXECINFO
             { 
                 void *array[64]; int size, i;
@@ -133,7 +133,7 @@ static void catch_signal(int sig)
                 size = backtrace(array, (sizeof array)/(sizeof array[0]));
 #if 0 /*(__GLIBC__ > 2) || ((__GLIBC__ == 2) && (__GLIBC_MINOR__ >= 1))*/
                 syms = backtrace_symbols(array, size);
-                for ( i=2; i<size; ++i ) {
+                for ( i=1; i<size; ++i ) {
                     print_crash(log, "\t%s\n", syms[i]);
                 }
                 free(syms);
