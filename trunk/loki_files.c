@@ -137,13 +137,7 @@ int loki_open(const char *file, int flags, mode_t mode)
     }
 
     /* If we're writing, we must write to the preferences */
-    if ( ! (flags & O_RDONLY) ) {
-        sprintf(path, "%s/%s", loki_getprefpath(), file);
-        value = open(path, flags, mode);
-        if ( (value < 0) && (flags & O_RDWR) ) {
-            /* Uh oh, need to copy from install path? */ ;
-        }
-    } else {
+    if ( flags == O_RDONLY ) {
         /* First look in preferences, then in data directory */
         value = 0;
         for ( pass = 0; !value && (pass < 3); ++pass ) {
@@ -161,6 +155,12 @@ int loki_open(const char *file, int flags, mode_t mode)
             strcat(path, "/");
             strcat(path, file);
             value = open(path, O_RDONLY, 0);
+        }
+    } else {
+        sprintf(path, "%s/%s", loki_getprefpath(), file);
+        value = open(path, flags, mode);
+        if ( (value < 0) && (flags & O_RDWR) ) {
+            /* Uh oh, need to copy from install path? */ ;
         }
     }
     return value;
