@@ -71,6 +71,31 @@ char *loki_gethomedir(void)
     return home;
 }
 
+/* Equivalent to the Win32 SplitPath() call */
+void loki_splitpath(const char *path, char *drive, char *dir, char *fname, char *ext)
+{
+	char *copy = strdup(path), *ptr;
+
+	strcpy(drive, "");
+	ptr = strrchr(copy, '/');
+	if(ptr) {
+		strcpy(fname, ptr+1);
+		*ptr = '\0';
+		strcpy(dir, copy);
+		strcat(dir,"/");
+	} else {
+		*dir = '\0';
+		strcpy(fname,copy);
+	}
+	ptr = strrchr(fname, '.');
+	if(ptr) {
+		strcpy(ext, ptr);
+		*ptr = '\0';
+	} else 
+		*ext = '\0';
+	free(copy);
+}
+
 /* Must be called BEFORE loki_initialize */
 void loki_setgamename(const char *n)
 {
