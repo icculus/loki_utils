@@ -267,6 +267,28 @@ void loki_writeconfig(const char *file)
     }
 }
 
+/* This was modified from setup - if you modify either, update the other */
+const char *detect_arch(void)
+{
+    const char *arch;
+
+#ifdef __i386
+    arch = "x86";
+#elif defined(powerpc)
+    arch = "ppc";
+#elif defined(__alpha__)
+    arch = "alpha";
+#elif defined(__sparc__)
+    arch = "sparc64";
+#elif defined(__arm__)
+    arch = "arm";
+#else
+    arch = "unknown";
+#endif
+    return arch;
+}
+
+
 /* Make this easier to change from the application code */
 #ifdef LINUX_DEMO
 int loki_demo = 1;
@@ -402,7 +424,8 @@ void loki_parseargs(int argc, char *argv[], const char *extra_help)
                 exit(0);
             case 'v':
                 printf("%s\n", loki_getgamedescription());
-                printf("Built with glibc-%d.%d\n", __GLIBC__, __GLIBC_MINOR__);
+                printf("Built with glibc-%d.%d on %s\n",
+                        __GLIBC__, __GLIBC_MINOR__, detect_arch());
                 exit(0);
             case 'h':
                 loki_printusage(argv[0], extra_help);
