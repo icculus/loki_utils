@@ -102,10 +102,11 @@ int loki_getcpuflags(void)
 		/* Extended CPUID supported, so get extended features */
 		"movl $0x80000001, %%eax\n\t"
 		"cpuid\n\t"
-		"testl $0x00800000, %%eax\n\t"	/* Test for MMX */
+		"movl %%eax, %%edx\n\t"
+		"testl $0x00800000, %%edx\n\t"	/* Test for MMX */
 		"jz NotSupported\n\t"		/* MMX not supported */
 		"movl $1, %0\n\n\t"		/* MMX Supported */
-		"testl $0x01000000, %%eax\n\t"	/* Test for Ext'd MMX */
+		"testl $0x01000000, %%edx\n\t"	/* Test for Ext'd MMX */
 		"jz Return\n\t"
 		"addl $2, %0\n\n\t"		/* EMMX also supported */
 		"jmp Return\n\t"
