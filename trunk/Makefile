@@ -10,7 +10,7 @@ CC = gcc
 CXX = g++
 AR = ar rcs
 ARCH = $(shell /loki/scripts/print_arch)
-GLMSG = true
+GLMSG = false
 
 INCLUDES += -I/usr/X11R6/include
 CFLAGS += -Wall -fsigned-char

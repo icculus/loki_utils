@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #include "loki_launchurl.h"
 
@@ -75,6 +76,37 @@ static int valid_program(const char *program)
     return found;
 }
 
+#define SAFE_LETTER(C)  (isalnum(C) || (C == ':') || (C == '/') || (C == '.'))
+
+static char *sanitize_url(const char *url, char *full_url, int maxlen)
+{
+    int i, j;
+    int ch;
+
+    /* Add http:// if it's missing */
+    if ( strstr(url, "://") == NULL ) {
+        strcpy(full_url, "http://");
+    } else {
+        strcpy(full_url, "");
+    }
+    j = strlen(full_url);
+
+    /* Copy the url, cleaning up potentially dangerous characters */
+    maxlen -= 4;
+    for ( i=0; j<maxlen && url[i]; ++i ) {
+        ch = (int)url[i];
+        if ( SAFE_LETTER(ch) ) {
+            full_url[j] = (char)ch;
+            j += 1;
+        } else {
+            sprintf(&full_url[j], "%%%2.2X", ch);
+            j += 3;
+        }
+    }
+    full_url[j] = '\0';
+    return(full_url);
+}
+
 /* This function launches the user's web browser with the given URL.
    The browser detection can be overridden by the LOKI_BROWSER environment
    variable, which is used as the format string: %s is replaced with the
@@ -87,6 +119,8 @@ static int valid_program(const char *program)
  */
 int loki_launchURL(const char *url)
 {
+    char full_url[PATH_MAX];
+
     /* List of programs and command strings to try */
     struct {
         environment running;
@@ -95,33 +129,35 @@ int loki_launchURL(const char *url)
     } browser_list[] = {
         { RUNNING_X11,
           "gnome-moz-remote",
-          "gnome-moz-remote --newwin %s" },
+          "gnome-moz-remote --newwin '%s'" },
         { RUNNING_X11,
           "netscape",
           "netscape -remote 'openURL(%s,new-window)' || netscape %s" },
         { RUNNING_X11,
           "mozilla",
-          "mozilla %s &" },
+          "mozilla '%s' &" },
         { RUNNING_X11,
           "opera",
           "opera -page='%s' &" },
         { RUNNING_X11,
           "links",
-          "xterm -T \"Web Browser\" -e links %s &" },
+          "xterm -T \"Web Browser\" -e links '%s' &" },
         { RUNNING_X11,
           "lynx",
-          "xterm -T \"Web Browser\" -e lynx %s &" },
+          "xterm -T \"Web Browser\" -e lynx '%s' &" },
         { RUNNING_TEXT,
           "links",
-          "links %s" },
+          "links '%s'" },
         { RUNNING_TEXT,
           "lynx",
-          "lynx %s" }
+          "lynx '%s'" }
     };
     environment running;
     int i, status;
     char *command;
     char command_string[4*PATH_MAX];
+
+    sanitize_url(url, full_url, sizeof(full_url));
 
     /* Check for DISPLAY environment variable - assume X11 if exists */
     if ( getenv("DISPLAY") ) {
@@ -142,7 +178,7 @@ int loki_launchURL(const char *url)
         }
     }
     if ( command ) {
-        sprintf(command_string, command, url, url);
+        sprintf(command_string, command, full_url, full_url);
         status = system(command_string);
     } else {
         status = -1;
