@@ -41,6 +41,7 @@ struct section {
 struct _loki_ini_file_t {
 	FILE *fd;
 	char path[PATH_MAX];
+	int changed; /* Boolean */
 	struct section *sections;
 };
 
@@ -127,6 +128,7 @@ ini_file_t *loki_openinifile(const char *path)
 		return NULL;
 
 	ini->sections = NULL;
+	ini->changed = 0;
 	ini->fd = fopen(path, "rb");
 	if( ! ini->fd ) {
 		free(ini);
@@ -267,17 +269,21 @@ static void free_section(struct section *s)
 /* Close the INI file, returns error code */
 int loki_closeinifile(ini_file_t *ini)
 {
-	if(ini->fd) {
-		fclose(ini->fd);
-		ini->fd = NULL;
+	if ( ini ) {
+		if ( ini->fd ) {
+			fclose(ini->fd);
+			ini->fd = NULL;
+		}
+
+		/* Free all the allocated memory */
+		free_section(ini->sections);
+		
+		free(ini);
+
+		return 1;
+	} else {
+		return 0;
 	}
-
-	/* Free all the allocated memory */
-	free_section(ini->sections);
-
-	free(ini);
-
-	return 1;
 }
 
 /* Return the string corresponding to a key in the specified section of the file,
@@ -312,6 +318,7 @@ int loki_putinistring(ini_file_t *ini, const char *section, const char *key, con
 					/* Replace existing value */
 					free(l->value);
 					l->value = strdup(value);
+					ini->changed = 1;
 					return 1;
 				}
 			}
@@ -320,6 +327,7 @@ int loki_putinistring(ini_file_t *ini, const char *section, const char *key, con
 				l = add_new_line(s);
 				l->key = key ? strdup(key) : NULL;
 				l->value = value ? strdup(value) : NULL;
+				ini->changed = 1;
 				return 1;
 			}
 		}
@@ -333,6 +341,7 @@ int loki_putinistring(ini_file_t *ini, const char *section, const char *key, con
 		l = add_new_line(s);
 		l->key = key ? strdup(key) : NULL;
 		l->value = value ? strdup(value) : NULL;
+		ini->changed = 1;
 		return 1;
 	}
 	return 0;
@@ -383,5 +392,6 @@ int loki_writeinifile(ini_file_t *ini, const char *path)
 		}
 	}
 
+	ini->changed = 0; /* Mark as in sync with the data on disc */
 	return 1;
 }
