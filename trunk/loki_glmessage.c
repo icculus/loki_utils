@@ -72,6 +72,10 @@
 #include "sdl_utils.h"
 #endif
 
+#ifdef LOKI_NO_GLMSG
+#error You defined LOKI_NO_GLMSG, and are trying to compile GLmsg support!
+#endif
+
 extern unsigned char loki_fontchars[][8];
 
 static int texty = 0;
@@ -94,7 +98,8 @@ struct loki_glmsg_funcs
     void (*glShadeModel)( GLenum mode );
     void (*glClear)( GLbitfield mask );
     void (*glClearColor)(GLclampf r, GLclampf g, GLclampf b, GLclampf alpha );
-    void (*glColor3f)( GLfloat red, GLfloat green, GLfloat blue );
+    void (*glColor4f)( GLfloat red, GLfloat green,
+                                   GLfloat blue, GLfloat alpha );
     void (*glRasterPos2i)( GLint x, GLint y );
     void (*glFlush)( void );
     void (*glViewport)( GLint x, GLint y, GLsizei width, GLsizei height );
@@ -103,6 +108,8 @@ struct loki_glmsg_funcs
     void (*glOrtho)( GLdouble left, GLdouble right,
                      GLdouble bottom, GLdouble top,
                      GLdouble near_val, GLdouble far_val );
+    void (*glDisable)( GLenum cap );
+    void (*glDisableClientState)( GLenum cap );
 };
 
 static int font_is_made = 0;
@@ -122,6 +129,7 @@ static void loki_glmsg_internal_makeRasterFont(void)
        fontOffset = glfns.glGenLists (128);
        for (i = 0; i < 128; i++) {
            glfns.glNewList(fontOffset + i, GL_COMPILE);
+           glfns.glColor4f(0.0, 1.0, 0.0, 1.0);
            glfns.glBitmap(8, 8, 0.0, 2.0, 10.0, 0.0, loki_fontchars[i]);
            glfns.glEndList();
        }
@@ -152,13 +160,15 @@ void loki_glmsg_internal_initfuncs(void)
     glfns.glShadeModel   = SDL_GL_GetProcAddress("glShadeModel");
     glfns.glClear        = SDL_GL_GetProcAddress("glClear");
     glfns.glClearColor   = SDL_GL_GetProcAddress("glClearColor");
-    glfns.glColor3f      = SDL_GL_GetProcAddress("glColor3f");
+    glfns.glColor4f      = SDL_GL_GetProcAddress("glColor4f");
     glfns.glRasterPos2i  = SDL_GL_GetProcAddress("glRasterPos2i");
     glfns.glFlush        = SDL_GL_GetProcAddress("glFlush");
     glfns.glViewport     = SDL_GL_GetProcAddress("glViewport");
     glfns.glMatrixMode   = SDL_GL_GetProcAddress("glMatrixMode");
     glfns.glLoadIdentity = SDL_GL_GetProcAddress("glLoadIdentity");
     glfns.glOrtho        = SDL_GL_GetProcAddress("glOrtho");
+    glfns.glDisable      = SDL_GL_GetProcAddress("glDisable");
+    glfns.glDisableClientState = SDL_GL_GetProcAddress("glDisableClientState");
 }
 
 
@@ -166,7 +176,7 @@ void loki_glmsg_internal_initfuncs(void)
  *
  *  returns -1 on error, 0 on success.
  */
-int loki_glmsg_initialize(GLfloat bgr, GLfloat bgg, GLfloat bgb, GLfloat bga)
+int loki_glmsg_initialize(GLfloat bgr, GLfloat bgg, GLfloat bgb)
 {
     SDL_Surface *surface = SDL_GetVideoSurface();
     int w = surface->w;
@@ -176,16 +186,37 @@ int loki_glmsg_initialize(GLfloat bgr, GLfloat bgg, GLfloat bgb, GLfloat bga)
 
     loki_glmsg_internal_initfuncs();
 
+   // glfns.glBlendColor(0.0f, 0.0f, 0.0f, 0.0f);
+   // glfns.glBlendFunc( GL_ONE, GL_ZERO  );
+   // glfns.glBlendEquation(GL_FUNC_ADD);
+   // glfns.glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+    glfns.glDisable(GL_LIGHTING);
+    glfns.glDisable(GL_COLOR_MATERIAL);
+    glfns.glDisable(GL_SCISSOR_TEST);
+    glfns.glDisable(GL_STENCIL_TEST);
+    glfns.glDisable(GL_DEPTH_TEST);
+    glfns.glDisable(GL_ALPHA_TEST);
+    glfns.glDisable(GL_BLEND);
+    glfns.glDisable(GL_DITHER);
+    glfns.glDisable(GL_LOGIC_OP);
+    glfns.glDisable(GL_FOG);
+    glfns.glDisable(GL_COLOR_LOGIC_OP);
+    glfns.glDisableClientState(GL_COLOR_ARRAY);
+    glfns.glDisableClientState(GL_VERTEX_ARRAY);
+    glfns.glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
     glfns.glShadeModel (GL_FLAT);
-    loki_glmsg_internal_makeRasterFont();
 
     glfns.glViewport(0, 0, (GLsizei) w, (GLsizei) h);
     glfns.glMatrixMode(GL_PROJECTION);
     glfns.glLoadIdentity();
     glfns.glOrtho (0.0, w, 0.0, h, -1.0, 1.0);
     glfns.glMatrixMode(GL_MODELVIEW);
+    glfns.glLoadIdentity();
 
-    glfns.glClearColor(bgr, bgg, bgb, bga);
+    loki_glmsg_internal_makeRasterFont();
+
+    glfns.glClearColor(1.0, bgg, bgb, 0.0);
     glfns.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     return(0);
@@ -202,7 +233,7 @@ void loki_glmsg_print(GLfloat r, GLfloat g, GLfloat b, const char *str)
                "\"%s\"\n", str);
     #endif
 
-    glfns.glColor3f(r, g, b);
+    glfns.glColor4f(r, g, b, 1.0);
     glfns.glRasterPos2i(textw, texty);
     loki_glmsg_internal_printString(str);
 
@@ -241,7 +272,7 @@ static inline void do_test(int w, int h)
     SDL_SetVideoMode(w, h, 16, SDL_OPENGL);
     SDL_WM_SetCaption("loki_glmessage.c test.", "loki_glmsg");
 
-    if (loki_glmsg_initialize(0.0, 0.0, 0.0, 0.0) == -1)
+    if (loki_glmsg_initialize(0.0, 0.0, 0.0) == -1)
     {
         fprintf(stderr, "loki_glmsg_initialize() failed!\n");
         SDL_Quit();

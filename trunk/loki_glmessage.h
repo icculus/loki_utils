@@ -26,7 +26,11 @@
 extern "C" {
 #endif
 
-int loki_glmsg_initialize(GLfloat bgr, GLfloat bgg, GLfloat bgb, GLfloat bga);
+#ifdef LOKI_NO_GLMSG
+#error You defined LOKI_NO_GLMSG, and included loki_glmessage.h!
+#endif
+
+int loki_glmsg_initialize(GLfloat bgr, GLfloat bgg, GLfloat bgb);
 void loki_glmsg_print(GLfloat r, GLfloat g, GLfloat b, const char *str);
 
 #ifdef __cplusplus
