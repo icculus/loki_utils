@@ -40,7 +40,6 @@ struct section {
 };
 
 struct _loki_ini_file_t {
-	FILE *fd;
 	char path[PATH_MAX];
 	int changed; /* Boolean */
 	struct section *sections, *iterator;
@@ -122,6 +121,7 @@ static void trim_spaces(char *str)
 ini_file_t * loki_createinifile(const char *path)
 {
 	ini_file_t *ini;
+	FILE *fd;
 
 	ini = malloc(sizeof(ini_file_t));
 
@@ -130,12 +130,13 @@ ini_file_t * loki_createinifile(const char *path)
 
 	ini->sections = ini->iterator = NULL;
 	ini->changed = 0;
-	ini->fd = fopen(path, "wb");
-	if( ! ini->fd ) {
+	strncpy(ini->path, path, PATH_MAX);
+	fd = fopen(path, "wb");
+	if( ! fd ) {
 		free(ini);
 		return NULL;
 	}
-	strncpy(ini->path, path, PATH_MAX);
+	fclose(fd);
 	add_new_section(ini);
 
 	return ini;
@@ -144,12 +145,13 @@ ini_file_t * loki_createinifile(const char *path)
 /* Open and loads the INI file, returns error code */
 ini_file_t *loki_openinifile(const char *path)
 {
+	ini_file_t *ini;
+	FILE *fd;
 	char buf[1024], c, prevc = '\0', *ptr = NULL;
 	enum status st = _start;
 	struct section *s = NULL;
 	struct line *l = NULL;
 	int line_number = 1;
-	ini_file_t *ini;
 
 	ini = malloc(sizeof(ini_file_t));
 
@@ -158,8 +160,8 @@ ini_file_t *loki_openinifile(const char *path)
 
 	ini->sections = ini->iterator = NULL;
 	ini->changed = 0;
-	ini->fd = fopen(path, "rb");
-	if( ! ini->fd ) {
+	fd = fopen(path, "rb");
+	if( ! fd ) {
 		free(ini);
 		/* Create the file if necessary */
 		if ( access(path, F_OK) < 0 ) {
@@ -172,7 +174,7 @@ ini_file_t *loki_openinifile(const char *path)
 	s = add_new_section(ini); /* Top level section, can only contain comment lines */
 
 	/* Parse the file */
-	while ( (c = fgetc(ini->fd)) != EOF ) {
+	while ( (c = fgetc(fd)) != EOF ) {
 		switch(st) {
 		case _start: /* Start of line */
 			ptr = buf;
@@ -195,7 +197,7 @@ ini_file_t *loki_openinifile(const char *path)
 					break;
 				} else if ( ! s->name ) {
 					fprintf(stderr,"Parse error at beginning of %s INI file (line %d)!\n", path, line_number);
-					fclose(ini->fd);
+					fclose(fd);
 					free_section(ini->sections);
 					free(ini);
 					return 0;
@@ -226,7 +228,7 @@ ini_file_t *loki_openinifile(const char *path)
 				st = _value;
 			} else if ( c == '\n' || c == '\r' ) {
 				fprintf(stderr,"Parse error in %s on line %d\n", path, line_number);
-				fclose(ini->fd);
+				fclose(fd);
 				free_section(ini->sections);
 				free(ini);
 				return 0;
@@ -292,7 +294,7 @@ ini_file_t *loki_openinifile(const char *path)
 	default:
 	}
 
-	fclose(ini->fd); ini->fd = NULL;
+	fclose(fd);
 	return ini;
 }
 
@@ -323,21 +325,18 @@ static void free_section(struct section *s)
 /* Close the INI file, returns error code */
 int loki_closeinifile(ini_file_t *ini)
 {
-	if ( ini ) {
-		if ( ini->fd ) {
-			fclose(ini->fd);
-			ini->fd = NULL;
-		}
+	int closed;
 
+	closed = 0;
+	if ( ini ) {
 		/* Free all the allocated memory */
 		free_section(ini->sections);
 		
 		free(ini);
 
-		return 1;
-	} else {
-		return 0;
+		closed = 1;
 	}
+	return closed;
 }
 
 
@@ -431,25 +430,15 @@ int loki_writeinifile(ini_file_t *ini, const char *path)
 	}
 
 	s  = ini->sections;
-	if ( path ) {
-		fd = fopen(path, "wb");
-		if ( ! fd ) {
-			perror("INI fopen(wb)");
-			return 0;
-		}
-	} else {
-		if ( ini->fd ) {
-			fclose(ini->fd);
-		}
-		ini->fd = fopen(ini->path, "wb");
-		if( ! ini->fd ) {
-			perror("INI fopen(wb)");
-			return 0;
-		}
-		fd = ini->fd;
+	if ( ! path ) {
+		path = ini->path;
+	}
+	fd = fopen(path, "wb");
+	if ( ! fd ) {
+		perror("INI fopen(wb)");
+		return 0;
 	}
 
-	rewind(fd);
 	for ( ; s ; s = s->next ) {
 		struct line *l;
 		if( s->name ) {
@@ -469,6 +458,7 @@ int loki_writeinifile(ini_file_t *ini, const char *path)
 			fputc('\n', fd);
 		}
 	}
+	fclose(fd);
 
 	ini->changed = 0; /* Mark as in sync with the data on disc */
 	return 1;
