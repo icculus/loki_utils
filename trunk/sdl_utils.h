@@ -30,6 +30,9 @@ extern int sdl_DisplayImage(const char *filename, SDL_Surface *screen);
  */
 extern void sdl_SnapShot(SDL_Surface *screen);
 
+void sdl_ShowMessage(const char *fmt, ...);
+
+
 /*********************************************************************/
 /*  Old and obsolete functions                                       */
 /*********************************************************************/
