@@ -363,7 +363,6 @@ void loki_registeroption_as(const char *lng, char sht, const char *comment, loki
 */
 void loki_parseargs(int argc, char *argv[], const char *extra_help)
 {
-    extern char *game_version;
     char short_options[MAX_OPTIONS*2+1] = ":";
     int i, j;
    
@@ -387,7 +386,7 @@ void loki_parseargs(int argc, char *argv[], const char *extra_help)
                 remaining_args = &argv[optind];
                 return;
             case 'v':
-                printf("%s", game_version);
+                printf("%s\n", loki_getgamedescription());
                 printf("Built with glibc-%d.%d\n", __GLIBC__, __GLIBC_MINOR__);
                 exit(0);
             case 'q':

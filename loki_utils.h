@@ -30,10 +30,16 @@ extern "C" {
 #endif
 
 /* Set the name of the game - should be called before loki_initialize() */
-extern void loki_setgamename(const char *n);
+extern void loki_setgamename(const char *name, const char *version, const char *description);
 
 /* Get the game name - can be called anytime after loki_setgamename() */
 extern const char *loki_getgamename(void);
+
+/* Get the game version - can be called anytime after loki_setgamename() */
+extern const char *loki_getgameversion(void);
+
+/* Get the game description - can be called anytime after loki_setgamename() */
+extern const char *loki_getgamedescription(void);
 
 /* This initializes the library without parsing the command-line arguments */
 extern void loki_initialize_noparse(int argc, char *argv[]);
