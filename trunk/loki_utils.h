@@ -35,6 +35,9 @@ extern void loki_setgamename(const char *n);
 /* Get the game name - can be called anytime after loki_setgamename() */
 extern const char *loki_getgamename(void);
 
+/* This initializes the library without parsing the command-line arguments */
+extern void loki_initialize_noparse(int argc, char *argv[]);
+
 /* This function parses command line arguments and initializes the
    utility functions that most Loki games use.
 */
