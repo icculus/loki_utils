@@ -61,8 +61,21 @@ extern char *loki_getprefpath(void);
 extern char *loki_getdatapath(void);
 extern char *loki_getcdrompath(void);
 
+/* Callback function to be called to prompt for the CD.
+   The return value is a boolean indicating whether to prompt again
+   (true = don't prompt again)
+ */
+typedef int (*loki_prompt_func) (const char *file);
+
+/* Function to be called when a file could not be found either in
+   the installation path or on the CD. If func is NULL, the prompt is
+   disabled */
+extern void  loki_cdpromptfunction (loki_prompt_func func);
+
 /* Returns the absolute path of a data file under datapath */
 extern char *loki_getdatafile(const char *file, char *filepath, int maxpath);
+/* The same, but its presence is necesary and the CDROM is prompted if needed */
+extern char *loki_promptdatafile(const char *file, char *filepath, int maxpath);
 /* The same for a preferences file */
 extern char *loki_getpreffile(const char *file, char *filepath, int maxpath);
 /* And to get a file from the CDROM, if its path has been set */

@@ -47,6 +47,9 @@ static char datapath[PATH_MAX];
 /* The directory where user preferences can be found (home directory) */
 static char prefpath[PATH_MAX];
 
+/* The function to be called if we prompt for the CD */
+static loki_prompt_func prompt_func = NULL;
+
 char *loki_gethomedir(void)
 {
     char *home = NULL;
@@ -182,6 +185,11 @@ void loki_setcdrompath(const char *path)
     cdrompath[PATH_MAX-1] = '\0';
 }
 
+void  loki_cdpromptfunction (loki_prompt_func func)
+{
+	prompt_func = func;
+}
+
 char *loki_getprefpath(void)
 {
     return(prefpath);
@@ -206,6 +214,26 @@ char *loki_getdatafile(const char *file, char *filepath, int maxpath)
         strncpy(filepath, loki_getcdrompath(), maxpath);
         strncat(filepath, "/", maxpath);
         strncat(filepath, file, maxpath);
+    }
+    return filepath;
+}
+
+char *loki_promptdatafile(const char *file, char *filepath, int maxpath)
+{
+	static int in_prompt = 0;
+
+    strncpy(filepath, loki_getdatapath(), maxpath);
+    strncat(filepath, "/", maxpath);
+    strncat(filepath, file, maxpath);
+    if ( (access(filepath, R_OK) != 0) && loki_hascdrompath() ) {
+        strncpy(filepath, loki_getcdrompath(), maxpath);
+        strncat(filepath, "/", maxpath);
+        strncat(filepath, file, maxpath);
+		if ( (access(filepath, R_OK) != 0) && prompt_func && !in_prompt ) {
+			in_prompt = 1;
+			while(! (*prompt_func)(file) );
+			in_prompt = 0;
+		}
     }
     return filepath;
 }
@@ -238,7 +266,7 @@ size_t loki_getavailablespace(const char *path)
 /* Code to determine the mount point of a CD-ROM */
 int loki_getmountpoint(const char *device, char *mntpt, int max_size)
 {
-    char devpath[PATH_MAX];
+    char devpath[PATH_MAX], mntdevpath[PATH_MAX];
     FILE * mountfp;
     struct mntent *mntent;
     int mounted;
@@ -258,11 +286,15 @@ int loki_getmountpoint(const char *device, char *mntpt, int max_size)
     /* Get the mount point */
     mounted = -1;
     memset(mntpt, 0, max_size);
-    mountfp = setmntent( _PATH_MOUNTED, "r" );
+    mountfp = setmntent( _PATH_MNTTAB, "r" );
     if( mountfp != NULL ) {
         mounted = 0;
         while( (mntent = getmntent( mountfp )) != NULL ){
-            if( strcmp( mntent->mnt_fsname, devpath ) == 0 ){
+			if( strncmp(mntent->mnt_fsname, "/dev", 4) || 
+				realpath(mntent->mnt_fsname, mntdevpath) == NULL ) {
+				continue;
+			}
+            if( strcmp( mntdevpath, devpath ) == 0 ){
                 mounted = 1;
                 assert(strlen( mntent->mnt_dir ) < max_size);
                 strncpy( mntpt, mntent->mnt_dir, max_size-1);
