@@ -1,6 +1,6 @@
 /*
     Loki Game Utility Functions
-    Copyright (C) 1999  Loki Entertainment Software
+    Copyright (C) 1999  Loki Software, Inc.
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Library General Public
