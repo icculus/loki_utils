@@ -54,7 +54,7 @@ typedef struct config_element {
 
 static config_element *config_list = NULL;
 
-static void loki_insertconfig(const char *key, const char *value)
+void loki_insertconfig(const char *key, const char *value)
 {
     config_element *pip, *last;
 
@@ -151,8 +151,12 @@ void loki_printusage(char *argv0, const char *help_text)
 {
     printf("Linux version by Loki Entertainment Software\n");
     printf("http://www.lokigames.com/\n");
+#ifdef DEMO
+    printf("Support - Full versions of our games have technical support\n");
+#else
     printf("Support - Phone:  1-801-356-7629 (9-5 PM US Mountain Time)\n");
     printf("          E-mail: support@lokigames.com\n");
+#endif
     printf("\n");
     printf("Usage: %s [options]\n", argv0);
     printf("\t[-h | --help]        Display this help message\n");

@@ -52,6 +52,9 @@ extern int loki_getconfig_int(const char *key);
 /* This function returns a float value from the configuration */
 extern double loki_getconfig_float(const char *key);
 
+/* This function only modifies the run-time config hashtable */
+extern void loki_insertconfig(const char *key, const char *value);
+
 #ifdef __cplusplus
 };
 #endif
