@@ -190,6 +190,7 @@ ini_file_t *loki_openinifile(const char *path)
 					break;
 				} else if ( ! s->name ) {
 					fprintf(stderr,"Parse error at beginning of %s INI file (line %d)!\n", path, line_number);
+					fclose(ini->fd);
 					free_section(ini->sections);
 					free(ini);
 					return 0;
@@ -220,6 +221,7 @@ ini_file_t *loki_openinifile(const char *path)
 				st = _value;
 			} else if ( c == '\n' || c == '\r' ) {
 				fprintf(stderr,"Parse error in %s on line %d\n", path, line_number);
+				fclose(ini->fd);
 				free_section(ini->sections);
 				free(ini);
 				return 0;
@@ -284,6 +286,8 @@ ini_file_t *loki_openinifile(const char *path)
 	  break;
 	default:
 	}
+
+	fclose(ini->fd); ini->fd = NULL;
 	return ini;
 }
 
@@ -431,11 +435,11 @@ int loki_writeinifile(ini_file_t *ini, const char *path)
 	} else {
 		if ( ini->fd ) {
 			fclose(ini->fd);
-			ini->fd = fopen(ini->path, "wb");
-			if( ! ini->fd ) {
-				perror("fopen");
-				return 0;
-			}
+		}
+		ini->fd = fopen(ini->path, "wb");
+		if( ! ini->fd ) {
+			perror("fopen");
+			return 0;
 		}
 		fd = ini->fd;
 	}
