@@ -20,6 +20,9 @@ endif
 ifneq ($(sdl_utils), false)
 CFLAGS += -D_REENTRANT -D_SDL_STATIC_LIB -I../SDL/include
 endif
+ifeq( $(windowed_only), true )
+CFLAGS += -DWINDOWED_ONLY
+endif
 
 CXXFLAGS = $(CFLAGS)
 .SUFFIXES: .c .cpp
