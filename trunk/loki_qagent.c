@@ -26,18 +26,22 @@
 void loki_runqagent(const char *stack_trace_file)
 {
 	int i;
-	const char *argv[12];
+	const char *argv[16];
 
 	/* Build the command line for the QAgent script */
 	i = 0;
 	argv[i++] = QAGENT;
-	argv[i++] = "--game_name";
+	argv[i++] = "--product_name";
 	argv[i++] = loki_getgamename();
-	argv[i++] = "--game_data";
+	argv[i++] = "--product_version";
+	argv[i++] = loki_getgameversion();
+	argv[i++] = "--product_desc";
+	argv[i++] = loki_getgamedescription();
+	argv[i++] = "--product_data";
 	argv[i++] = loki_getdatapath();
-	argv[i++] = "--game_prefs";
+	argv[i++] = "--product_prefs";
 	argv[i++] = loki_getprefpath();
-	argv[i++] = "--game_cdrom";
+	argv[i++] = "--product_cdrom";
 	argv[i++] = loki_getcdrompath();
 	if ( stack_trace_file && *stack_trace_file ) {
 		argv[i++] = "--game_stack";

@@ -105,11 +105,9 @@ static void catch_signal(int sig)
             break;
         case SIGABRT:
             print_crash(log, "BUG!  Exception triggered, cleaning up.\n");
-            { extern char *game_version;
-                print_crash(log, "%s", game_version);
-                print_crash(log, "Built with glibc-%d.%d\n",
+            print_crash(log, "%s\n", loki_getgamedescription());
+            print_crash(log, "Built with glibc-%d.%d\n",
                         __GLIBC__, __GLIBC_MINOR__);
-            }
             fatal_crash = 1;
 #ifdef LINUX_BETA
             fprintf(stderr, "Please file a full bug report in Fenris,\n"
@@ -121,11 +119,9 @@ static void catch_signal(int sig)
             break;
         case SIGSEGV:
             print_crash(log, "BUG! (Segmentation Fault)  Going down hard...\n");
-            { extern char *game_version;
-                print_crash(log, "%s", game_version);
-                print_crash(log, "Built with glibc-%d.%d\n",
+            print_crash(log, "%s\n", loki_getgamedescription());
+            print_crash(log, "Built with glibc-%d.%d\n",
                         __GLIBC__, __GLIBC_MINOR__);
-            }
 #ifdef HAS_EXECINFO
             { 
                 void *array[64]; int size, i;

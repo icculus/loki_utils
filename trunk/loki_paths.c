@@ -37,6 +37,8 @@
 
 /* A short game name, could be used as argv[0] */
 static char game_name[100] = "";
+static char game_versionstring[100] = "";
+static char game_description[256] = "";
 
 /* The directory where the data files can be found (CD-ROM) */
 static char cdrompath[PATH_MAX];
@@ -106,20 +108,31 @@ void loki_splitpath(const char *path, char *drive, char *dir, char *fname, char 
 }
 
 /* Must be called BEFORE loki_initialize */
-void loki_setgamename(const char *n)
+void loki_setgamename(const char *name, const char *version, const char *description)
 {
 #ifndef __TEST_MAIN
-    if ( strcmp(n+strlen(n)-5, "_demo") == 0 ) {
+    if ( strcmp(name+strlen(name)-5, "_demo") == 0 ) {
         loki_isdemo(1);
     }
 #endif
-    strncpy(game_name, n, sizeof(game_name));
+    strncpy(game_name, name, sizeof(game_name));
+    strncpy(game_versionstring, version, sizeof(game_versionstring));
+    sprintf(game_description, "%s %s", description, version);
 }
 
 const char *loki_getgamename(void)
 {
     return game_name;
 }
+const char *loki_getgameversion(void)
+{
+    return game_versionstring;
+}
+const char *loki_getgamedescription(void)
+{
+    return game_description;
+}
+
 
 /* 
     This function gets the directory containing the running program.
@@ -136,7 +149,7 @@ void loki_initpaths(char *argv0)
     }
 
     if(*game_name == 0) /* Game name defaults to argv[0] */
-      loki_setgamename(argv0);
+      loki_setgamename(argv0, "0.1", "");
 
     strcpy(temppath, argv0);  /* If this overflows, it's your own fault :) */
     if ( ! strrchr(temppath, '/') ) {
@@ -369,7 +382,7 @@ int main(int argc, char *argv[])
 {
     char cdrom[1024];
 
-    loki_setgamename("test");
+    loki_setgamename("test", "1.0");
     loki_initpaths(argv[0]);
     printf("Data path: %s\n", loki_getdatapath());
     printf("Pref path: %s\n", loki_getprefpath());
