@@ -139,8 +139,8 @@ int loki_open(const char *file, int flags, mode_t mode)
     /* If we're writing, we must write to the preferences */
     if ( flags == O_RDONLY ) {
         /* First look in preferences, then in data directory */
-        value = 0;
-        for ( pass = 0; !value && (pass < 3); ++pass ) {
+        value = -1;
+        for ( pass = 0; (value < 0) && (pass < 3); ++pass ) {
             switch (pass) {
                 case 0:
                     strcpy(path, loki_getprefpath());
