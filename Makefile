@@ -27,6 +27,13 @@ endif
 ifeq ($(windowed_only), true)
 CFLAGS += -DWINDOWED_ONLY
 endif
+ifeq ($(BETA), true)
+CFLAGS += -DLINUX_BETA
+endif
+ifeq ($(DEMO), true)
+CFLAGS += -DLINUX_DEMO
+endif
+
 
 CXXFLAGS = $(CFLAGS)
 .SUFFIXES: .c .cpp
@@ -55,7 +62,7 @@ testini: testini.c $(TARGET)
 	$(CC) $(CFLAGS) -o testini testini.c -L. -lloki
 
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -f $(OBJS) $(TARGET) *~
 
 dep: depend
 

@@ -33,12 +33,6 @@
 
 #include "loki_utils.h"
 
-#ifdef LINUX_BETA
-#define BUGS_EMAIL    "beta@lokigames.com"
-#else
-#define BUGS_EMAIL    "support@lokigames.com"
-#endif
-
 static void (*signal_cleanup)(void) = NULL;
 
 // Try to clean up gracefully on a signal, and terminate us if we fail
@@ -89,8 +83,13 @@ static void catch_signal(int sig)
                 fprintf(stderr, "Built with glibc-%d.%d\n",
                         __GLIBC__, __GLIBC_MINOR__);
             }
+#ifdef LINUX_BETA
+            fprintf(stderr, "Please file a full bug report in Fenris,\n"
+					"at http://fenris.lokigames.com/\n");
+#else
             fprintf(stderr, "Please send the text of the failed assertion,\n"
-                    "along with the contents of autosave to: "BUGS_EMAIL"\n");
+                    "along with the contents of autosave to: support@lokigames.com\n");
+#endif
             break;
         case SIGSEGV:
             fprintf(stderr, "BUG! (Segmentation Fault)  Going down hard...\n");
@@ -112,8 +111,14 @@ static void catch_signal(int sig)
 #else
 #warning Stack dump disabled.
 #endif
+
+#ifdef LINUX_BETA
+            fprintf(stderr, "Please file a full bug report in Fenris,\n"
+					"at http://fenris.lokigames.com/\n");
+#else
             fprintf(stderr, "Please send a full bug report,\n"
-                    "along with the contents of autosave to: "BUGS_EMAIL"\n");
+                    "along with the contents of autosave to: support@lokigames.com\n");
+#endif
 
 #if 0 // bk991008 - kills Gnome, see above
             // Now kill any outstanding threads (network, etc.)
