@@ -66,7 +66,7 @@ clean:
 dep: depend
 
 depend:
-	$(CXX) -MM $(INCLUDES) $(CSRC) $(CPPSRC) > .depend
+	$(CXX) -MM $(CFLAGS) $(CSRC) $(CPPSRC) > .depend
 
 ifeq ($(wildcard .depend),.depend)
 include .depend

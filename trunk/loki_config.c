@@ -27,6 +27,7 @@
 #include <ctype.h>
 
 #include "loki_utils.h"
+#include "loki_inifile.h"
 
 /* This is the name of the configuration file */
 #define CONFIG_FILENAME    "userprofile.txt"
@@ -73,6 +74,8 @@ static const char *option_comment[MAX_OPTIONS] =
 
 static char **remaining_args = NULL;
 
+
+
 static int nb_options = COMMON_OPTIONS;
 
 /* For now, we use a simple linked-list implementation */
@@ -90,21 +93,21 @@ void loki_configdefault( const char* dflt )
 {
 
     if( loki_config_default ) {
-	free( loki_config_default );
-	loki_config_default = NULL;
+		free( loki_config_default );
+		loki_config_default = NULL;
     }
 
     if( dflt ) {
-	int length = strlen( dflt );
-	loki_config_default = (char*) malloc( length + 1 );
-
-	if( loki_config_default ) {
-	    strncpy( loki_config_default, dflt, length );
-            loki_config_default[length] = '\0';
-	}
-
+		int length = strlen( dflt );
+		loki_config_default = (char*) malloc( length + 1 );
+		
+		if( loki_config_default ) {
+			strncpy( loki_config_default, dflt, length );
+			loki_config_default[length] = '\0';
+		}
+		
     }
-
+	
 }
 
 void loki_insertconfig(const char *key, const char *value)
@@ -148,45 +151,25 @@ void loki_insertconfig(const char *key, const char *value)
     }
 }
 
+ini_file_t *loki_openinifile_internal(const char *path, int userreg);
+ini_file_t * loki_createinifile_internal(const char *path, int userreg);
+
 static void loki_parseconfig(const char *file)
 {
-    FILE *config;
-    char line[BUFSIZ];
-    char *key;
-    char *value;
-    char *trim;
-
-    config = fopen(file, "r");
-    if ( config != NULL ) {
-        while ( fgets(line, BUFSIZ-1, config) ) {
-            /* Isolate the key */
-            for ( key=line; isspace(*key); ++key )
-                ++key;
-            value = strchr(key, '=');
-            if ( value == NULL ) {
-                continue;
-            }
-            for (trim=(value-1); (trim > key) && isspace(*trim); )
-                --trim;
-            trim[1] = '\0';
-
-            /* Isolate the value */
-            for ( value=(value+1); isspace(*value); )
-                ++value;
-            for (trim=(value+strlen(value)-1); (trim > key) && isspace(*trim); )
-                --trim;
-            trim[1] = '\0';
-
-            /* Make sure both exist */
-            if ( !*key || !*value ) {
-                continue;
-            }
-
-            /* Add them to our config */
-            loki_insertconfig(key, value);
-        }
-        fclose(config);
-    }
+	ini_file_t *ini = loki_openinifile_internal(file, 1);
+	
+	if ( ini ) {
+		const char *key, *value;
+		ini_line_t *line = loki_begin_iniline(ini, NULL);
+		if ( line ) {
+			do {
+				if ( loki_get_iniline(line, &key, &value) ) {
+					loki_insertconfig(key, value);
+				}
+			} while( loki_next_iniline(line) );
+		}
+		loki_closeinifile(ini);
+	}
 }
 
 /* This function loads Loki-specific configuration values from 
@@ -213,6 +196,22 @@ void loki_initconfig(void)
     }
 }
 
+/* Creates an INI file with a dump of the current configuration */
+void loki_writeconfig(const char *file)
+{
+	ini_file_t *ini = loki_createinifile_internal(file, 0);
+
+	if ( ini ) {
+		config_element *pip;
+
+		for ( pip=config_list; pip; pip=pip->next ) {
+			loki_putinistring(ini, NULL, pip->key, pip->value);
+		}
+		loki_writeinifile(ini, file);
+		loki_closeinifile(ini);
+	}
+}
+
 /* Make this easier to change from the application code */
 #ifdef LINUX_DEMO
 int loki_demo = 1;
@@ -232,11 +231,11 @@ void loki_printusage(char *argv0, const char *help_text)
     int i;
     printf("Linux version by Loki Entertainment Software\n");
     printf("http://www.lokigames.com/\n");
-    if ( loki_demo )
-      printf("Technical support is only available with the full game\n");
-    else {
-      printf("Support - Phone:  1-714-508-2140 (9-5 PM US Pacific Time)\n");
-      printf("          E-mail: support@lokigames.com\n");
+    if ( loki_demo ) {
+		printf("Technical support is only available with the full game\n");
+    } else {
+		printf("Support - Phone:  1-714-508-2140 (9-5 PM US Pacific Time)\n"
+			   "          E-mail: support@lokigames.com\n");
     }
     printf("\n");
     printf("Usage: %s [options]\n", argv0);

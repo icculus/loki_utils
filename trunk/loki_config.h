@@ -90,6 +90,9 @@ extern double loki_getconfig_float(const char *key);
 /* This function only modifies the run-time config hashtable */
 extern void loki_insertconfig(const char *key, const char *value);
 
+/* This function writes the current configuration to a parsable INI file */
+extern void loki_writeconfig(const char *file);
+
 /* This function returns the subset of argv[] that holds all the non-option arguments.
    This must be called AFTER loki_initialize() for it to make any sense. */
 extern char **loki_getarguments(void);
