@@ -15,7 +15,7 @@ CFLAGS += -Wall
 INCLUDES =  -I/usr/local/include/SDL
 CFLAGS += $(INCLUDES)
 ifeq ($(DEBUG),true)
-CFLAGS += -g
+CFLAGS += -g -O
 else
 CFLAGS += -O2
 endif
@@ -50,6 +50,9 @@ TARGET = libloki.a
 
 $(TARGET): $(OBJS)
 	$(AR) $(TARGET) $(OBJS)
+
+testargs: $(TARGET) testargs.c
+	$(CC) $(CFLAGS) -o testargs testargs.c -L. -lloki
 
 clean:
 	rm -f $(OBJS) $(TARGET)
