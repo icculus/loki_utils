@@ -41,7 +41,7 @@ int loki_stat(const char *file, struct stat *statb)
         return stat(file, statb);
     }
 
-    /* First look in preferences, then in data directory */
+    /* First look in preferences, then in data and cdrom directories */
     value = -1;
     for ( pass = 0; (value < 0) && (pass < 3); ++pass ) {
         switch (pass) {
@@ -52,12 +52,19 @@ int loki_stat(const char *file, struct stat *statb)
                 strcpy(path, loki_getdatapath());
                 break;
             case 2:
+                strcpy(path, loki_getcdrompath());
+                break;
+#if 0
+            case 3:
                 strcpy(path, ".");
                 break;
+#endif
         }
-        strcat(path, "/");
-        strcat(path, file);
-        value = stat(path, statb);
+        if ( path[0] ) {
+            strcat(path, "/");
+            strcat(path, file);
+            value = stat(path, statb);
+        }
     }
     return value;
 }
@@ -114,12 +121,19 @@ FILE *loki_fopen(const char *file, const char *mode)
                     strcpy(path, loki_getdatapath());
                     break;
                 case 2:
+                    strcpy(path, loki_getcdrompath());
+                    break;
+#if 0
+                case 3:
                     strcpy(path, ".");
                     break;
+#endif
             }
-            strcat(path, "/");
-            strcat(path, file);
-            value = fopen(path, mode);
+            if ( path[0] ) {
+                strcat(path, "/");
+                strcat(path, file);
+                value = fopen(path, mode);
+            }
         }
     }
     return value;
@@ -196,10 +210,17 @@ int loki_open(const char *file, int flags, mode_t mode)
                     path = loki_getdatapath();
                     break;
                 case 2:
+                    path = loki_getcdrompath();
+                    break;
+#if 0
+                case 3:
                     path = ".";
                     break;
+#endif
             }
-            value = open_nocase(path, file, O_RDONLY, 0);
+            if ( path[0] ) {
+                value = open_nocase(path, file, O_RDONLY, 0);
+            }
         }
     } else {
         char path[PATH_MAX];
