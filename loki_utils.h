@@ -143,7 +143,8 @@ void loki_splitpath(const char *path, char *drive, char *dir, char *fname, char 
 extern int loki_stat(const char *file, struct stat *statb);
 extern FILE *loki_fopen(const char *file, const char *mode);
 extern int loki_open(const char *file, int flags, mode_t mode);
-
+extern FILE *loki_fopen_nocase(const char *file, const char *mode);
+    
 /* Returns the available disk space in kilobytes on the filesystem that contains "path" */
 extern size_t loki_getavailablespace(const char *path);
 
