@@ -10,6 +10,7 @@ CC = gcc
 CXX = g++
 AR = ar rcs
 
+INCLUDES += -I/usr/X11R6/include
 CFLAGS += -Wall -fsigned-char
 CFLAGS += $(INCLUDES)
 ifeq ($(DEBUG),true)
