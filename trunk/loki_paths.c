@@ -99,6 +99,9 @@ void loki_splitpath(const char *path, char *drive, char *dir, char *fname, char 
 /* Must be called BEFORE loki_initialize */
 void loki_setgamename(const char *n)
 {
+    if ( strcmp(n+strlen(n)-5, "_demo") == 0 ) {
+        loki_isdemo(1);
+    }
     strncpy(game_name, n, sizeof(game_name));
 }
 
