@@ -316,7 +316,7 @@ int loki_getmountpoint(const char *device, char *mntpt, int max_size)
     /* Get the mount point */
     mounted = -1;
     memset(mntpt, 0, max_size);
-    mountfp = setmntent( _PATH_MNTTAB, "r" );
+    mountfp = setmntent( _PATH_MOUNTED, "r" );
     if( mountfp != NULL ) {
         mounted = 0;
         while( (mntent = getmntent( mountfp )) != NULL ){
