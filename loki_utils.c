@@ -18,7 +18,12 @@
 */
 
 #include <unistd.h>
+#include <stdio.h>
 #include "loki_utils.h"
+
+//#define DEBUG_SETUID
+
+static unsigned int root_cnt = 0;
 
 /* This function parses command line arguments and initializes the utility
    functions that most Loki games use.
@@ -26,7 +31,7 @@
 void loki_initialize(int argc, char *argv[], const char *extra_help)
 {
     /* Make this semi-safe if we're set-uid root - not a security fix!! */
-    seteuid(getuid());
+    loki_releaseroot();
 
     /* Initialize crash handlers */
     loki_initsignals();
@@ -41,3 +46,30 @@ void loki_initialize(int argc, char *argv[], const char *extra_help)
     loki_parseargs(argc, argv, extra_help);
 }
 
+/* These two functions are used to bracket specific sections of
+   code that may need root privileges.
+   It uses a counter to track the number of calls, so seteuid()
+   is called only when necessary.
+*/
+void loki_acquireroot(void)
+{
+  if(!root_cnt){
+#ifdef DEBUG_SETUID
+	fprintf(stderr,"Switching to root\n");
+#endif
+	seteuid(0);
+  }
+  root_cnt ++;
+}
+
+void loki_releaseroot(void)
+{
+  if(root_cnt > 0)
+	root_cnt --;
+  if(!root_cnt){
+#ifdef DEBUG_SETUID
+	fprintf(stderr,"Switching to user\n");
+#endif
+	seteuid(getuid());
+  }
+}

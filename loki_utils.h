@@ -37,6 +37,10 @@ extern void loki_initialize(int argc, char *argv[], const char *extra_help);
 /* This function initializes crash signal handlers */
 extern void loki_initsignals(void);
 
+/* These functions are used to bracket sections of code that may need root privileges */
+extern void loki_acquireroot(void);
+extern void loki_releaseroot(void);
+
 /* These functions tell whether the CD-ROM path has been set */
 extern int loki_hascdrompath(void);
 extern void loki_setcdrompath(const char *path);
