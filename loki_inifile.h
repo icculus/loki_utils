@@ -52,6 +52,33 @@ int loki_inihaschanged(ini_file_t *ini);
  */
 int loki_writeinifile(ini_file_t *ini, const char *path);
 
+  /******** Section Enumeration Functions **********/
+
+struct _loki_ini_iterator_t; /* Private type */
+
+typedef struct _loki_ini_iterator_t ini_iterator_t;
+
+/* Initialize the iterator to the beginning of the given section.
+   Returns NULL if the section does not exist.
+ */
+ini_iterator_t *loki_begininisection(ini_file_t *ini, const char *section);
+
+/* Get the current key/value pair pointed to by the iterator.
+   'lkey' and 'lvalue' are the size of the buffers passed in argument to the function.
+   Returns a positive value if everything was OK, or zero else.
+ */
+int loki_getiniline(ini_iterator_t *iterator, char *key, int lkey, char *value, int lvalue);
+
+/* Iterator to the next line of the section.
+   Returns zero when at the end of the section or an error occured.
+ */
+int loki_nextiniline(ini_iterator_t *iterator);
+
+/* Free the iterator object allocated by loki_begininisection.
+   Must be called when the user is done with the iterator.
+ */
+void loki_freeiniiterator(ini_iterator_t *iterator);
+
 #ifdef __cplusplus
 };
 #endif
