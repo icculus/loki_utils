@@ -53,6 +53,11 @@ extern void loki_configdefault( const char* dflt );
 
 #define loki_registeroption(l, s, c) loki_registeroption_as(l, s, c, LOKI_BOOLEAN)
 
+/* Add a standard set of command line options to the list,
+   this should be called after loki_setgamename(), but before loki_initalize()
+*/
+extern void loki_register_stdoptions(void);
+
 /* This registers a new command-line option switch.
    This functions needs to be called BEFORE any call to loki_parseargs or loki_initialize
  */

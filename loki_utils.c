@@ -49,6 +49,7 @@ void loki_initialize(int argc, char *argv[], const char *extra_help)
     loki_initialize_noparse(argc, argv);
 
     /* Handle command line parsing */
+    loki_register_stdoptions();
     loki_parseargs(argc, argv, extra_help);
 }
 
