@@ -56,6 +56,7 @@ static struct option long_options[MAX_OPTIONS+1] =
   { "nocdrom",     0, 0, 'c' },
   { NULL,          0, 0,  0  }
 };
+static int optional[MAX_OPTIONS+1] = { 0 };
 
 static const char *option_comment[MAX_OPTIONS] =
 {
@@ -69,6 +70,8 @@ static const char *option_comment[MAX_OPTIONS] =
     "Do not access the CD-ROM",
     NULL,
 };
+
+static char **remaining_args = NULL;
 
 static int nb_options = COMMON_OPTIONS;
 
@@ -116,17 +119,25 @@ void loki_insertconfig(const char *key, const char *value)
         }
     }
     if ( pip ) {  /* Replace existing entry */
-        pip->value = (char *)realloc(pip->value, strlen(value)+1);
-        strcpy(pip->value, value);
+		if ( value ) {
+			pip->value = (char *)realloc(pip->value, strlen(value)+1);
+			strcpy(pip->value, value);
+		} else {
+			pip->value = NULL;
+		}
     } else {
         pip = (config_element *)malloc(sizeof *pip);
         assert(pip);
         pip->key = (char *)malloc(strlen(key)+1);
         assert(pip->key);
         strcpy(pip->key, key);
-        pip->value = (char *)malloc(strlen(value)+1);
-        assert(pip->value);
-        strcpy(pip->value, value);
+		if ( value ) {
+			pip->value = (char *)malloc(strlen(value)+1);
+			assert(pip->value);
+			strcpy(pip->value, value);
+		} else {
+			pip->value = NULL;
+		}
         pip->next = NULL;
 
         if ( last ) {
@@ -274,14 +285,24 @@ void loki_printusage(char *argv0, const char *help_text)
 }
 
 /* This registers a new command-line option switch */
-void loki_registeroption(const char *lng, char sht, const char *comment)
+void loki_registeroption_as(const char *lng, char sht, const char *comment, loki_optiontype t)
 {
   if(nb_options < MAX_OPTIONS){
     static struct option fin_opt = {NULL, 0,0,0};
 
     long_options[nb_options].name = strdup(lng); /* Needs to be free()'d at some point */
     long_options[nb_options].flag = NULL;
-    long_options[nb_options].has_arg = 0;
+	optional[nb_options] = 0;
+	switch(t) {
+	case LOKI_OPTSTRING:
+	  optional[nb_options] = 1;
+	case LOKI_STRING:
+	  long_options[nb_options].has_arg = required_argument;
+	  break;
+	case LOKI_BOOLEAN:
+	  long_options[nb_options].has_arg = no_argument;
+	  break;
+	}
     long_options[nb_options].val = sht;
     option_comment[nb_options] = comment;
     nb_options ++;
@@ -295,23 +316,27 @@ void loki_registeroption(const char *lng, char sht, const char *comment)
 void loki_parseargs(int argc, char *argv[], const char *extra_help)
 {
     extern char *game_version;
-    char short_options[MAX_OPTIONS+1];
-    int i;
+    char short_options[MAX_OPTIONS*2+1] = ":";
+    int i, j;
    
-    for(i=0; i<nb_options; i++)
-    {
-        if (long_options[i].val != '\0')
-            short_options[i] = long_options[i].val;
-    }
+    for(i=0, j=1; i<nb_options; i++) {
+        if (long_options[i].val != '\0') {
+			short_options[j++] = long_options[i].val;
+			if ( long_options[i].has_arg > 0 ) {
+				short_options[j++] = ':';
+			}
+		}
+	}
+    short_options[j] = '\0';
 
-    short_options[i] = '\0';
-
+	opterr = 0;
     while (1) {  /* Loop terminates when getopt returns -1 and we return */
         int c, i;
 
-        c = getopt_long_only(argc, argv, short_options, long_options, 0);
+        c = getopt_long_only(argc, argv, short_options, long_options, NULL);
         switch (c) {
             case -1:
+			    remaining_args = &argv[optind];
                 return;
             case 'v':
                 printf("%s", game_version);
@@ -321,10 +346,28 @@ void loki_parseargs(int argc, char *argv[], const char *extra_help)
                 loki_printusage(argv[0], extra_help);
                 exit(0);
                 break;              
+		    case ':': /* Argument missing error */
+                for ( i=0; long_options[i].name; ++i ) {
+                    if ( optopt == long_options[i].val ) {
+						if(optional[i]) {
+							loki_insertconfig(long_options[i].name, NULL);
+						} else {
+							fprintf(stderr,"ERROR: Missing argument for option -%c\n", optopt);
+						}
+					}
+				}
+				break;
             default:
                 for ( i=0; long_options[i].name; ++i ) {
                     if ( c == long_options[i].val ) {
-                        loki_insertconfig(long_options[i].name, "1");
+						switch ( long_options[i].has_arg ) {
+						case required_argument:
+							loki_insertconfig(long_options[i].name, optarg);
+							break;
+						case no_argument:
+							loki_insertconfig(long_options[i].name, "1");
+							break;
+						}
                         break;
                     }
                 }
@@ -335,6 +378,13 @@ void loki_parseargs(int argc, char *argv[], const char *extra_help)
                 break;              
         }
     }
+}
+
+/* This function returns the subset of argv[] that holds all the non-option arguments.
+   This must be called AFTER loki_initialize() for it to make any sense. */
+char **loki_getarguments(void)
+{
+  return remaining_args;
 }
 
 /* This function returns a default value from the configuration */
@@ -379,21 +429,21 @@ int loki_getconfig_bool(const char *key)
      * Otherwise, return true.
      */
     if( value ) {
-	if( !strcasecmp( value, "false" ) ) {
-	    retval = 0;
-	} else if( !strcasecmp( value, "no" ) ) {
-	    retval = 0;
-	} else if( !strcasecmp( value, "off" ) ) {
-	    retval = 0;
-	} else if( !strcasecmp( value, "0" ) ) {
-	    retval = 0;
-	} else if ( !strcasecmp( value, "" ) ) {
-	    retval = 0;
-	} else {
-	    retval = 1;
-	}
+		if( !strcasecmp( value, "false" ) ) {
+			retval = 0;
+		} else if( !strcasecmp( value, "no" ) ) {
+			retval = 0;
+		} else if( !strcasecmp( value, "off" ) ) {
+			retval = 0;
+		} else if( !strcasecmp( value, "0" ) ) {
+			retval = 0;
+		} else if ( !strcasecmp( value, "" ) ) {
+			retval = 0;
+		} else {
+			retval = 1;
+		}
     } else {
-	retval = 0;
+		retval = 0;
     }
 
     return retval;
@@ -407,9 +457,9 @@ int loki_getconfig_int(const char *key)
     value = loki_getconfig_str(key);
 
     if( value ) {
-	return atoi( value );
+		return atoi( value );
     } else {
-	return 0;
+		return 0;
     }
 
 }
@@ -420,12 +470,33 @@ double loki_getconfig_float(const char *key)
     char *value;
 
     value = loki_getconfig_str(key);
-
     if( value ) {
-	return atof( value );
+		return atof( value );
     } else {
-	return 0.0;
+		return 0.0;
     }
-
 }
 
+/* This function returns an optional string value from the configuration */
+int loki_getconfig_optstr(const char *key, const char **str)
+{
+	/* This may look like we're duplicating code but actually we need to
+	   check for the actual presence of the key instead of defaulting to
+	   a null string value */
+
+    config_element *pip;
+
+    /* Search for an existing entry with this value */
+    for ( pip=config_list; pip; pip=pip->next ) {
+        if ( strcasecmp(key, pip->key) == 0 ) {
+            break;
+        }
+    }
+    if ( pip ) {
+        *str = pip->value;
+		return 1;
+    } else {
+		*str = NULL;
+		return 0;
+    }
+}

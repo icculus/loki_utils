@@ -35,6 +35,14 @@ extern "C" {
 */
 extern void loki_initconfig(void);
 
+/* This defines the possible types of additional command-line options that can
+   registered by the program */
+typedef enum {
+  LOKI_BOOLEAN = 0,
+  LOKI_STRING,
+  LOKI_OPTSTRING
+} loki_optiontype;
+
 /* This function tells the library that the game is (or isn't) a demo,
    so it doesn't print out support information on usage screen.
 */
@@ -43,10 +51,12 @@ extern void loki_isdemo(int isdemo);
 /* Set the default value for config names if they are not found. */
 extern void loki_configdefault( const char* dflt );
 
+#define loki_registeroption(l, s, c) loki_registeroption_as(l, s, c, LOKI_BOOLEAN)
+
 /* This registers a new command-line option switch.
    This functions needs to be called BEFORE any call to loki_parseargs or loki_initialize
  */
-extern void loki_registeroption(const char *lng, char sht, const char *comment);
+extern void loki_registeroption_as(const char *lng, char sht, const char *comment, loki_optiontype t);
 
 /* This function parses command line arguments to finalize the config.
    This function is called by loki_initialize().
@@ -59,6 +69,15 @@ extern void loki_printusage( char* argv0, const char* help_text );
 /* This function returns a string value from the configuration */
 extern char *loki_getconfig_str(const char *key);
 
+/* This function returns an optional string value from the configuration.
+   Here is how it works :
+   The function returns FALSE if the option was not mentioned.
+   It returns TRUE if it was mentionned. Then check *str: if it's NULL
+   then the optional argument was not there, else *str is a pointer to
+   the argument string.
+ */
+extern int loki_getconfig_optstr(const char *key, const char **str);
+
 /* This function returns a boolean value from the configuration */
 extern int loki_getconfig_bool(const char *key);
 
@@ -70,6 +89,10 @@ extern double loki_getconfig_float(const char *key);
 
 /* This function only modifies the run-time config hashtable */
 extern void loki_insertconfig(const char *key, const char *value);
+
+/* This function returns the subset of argv[] that holds all the non-option arguments.
+   This must be called AFTER loki_initialize() for it to make any sense. */
+extern char **loki_getarguments(void);
 
 #ifdef __cplusplus
 };
