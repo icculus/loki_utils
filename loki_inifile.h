@@ -22,6 +22,10 @@
 #ifndef _LOKI_INIFILE_H_
 #define _LOKI_INIFILE_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct _loki_ini_file_t; /* Defined in loki_inifile.c */
 
 typedef struct _loki_ini_file_t ini_file_t;
@@ -39,9 +43,17 @@ const char *loki_getinistring(ini_file_t *ini, const char *section, const char *
 /* Add or modify a keyed value in the INI file, returns error code */
 int loki_putinistring(ini_file_t *ini, const char *section, const char *key, const char *value);
 
+/* Returns a boolean value indicating if the image of the INI file in memory is in sync
+   with the file on disc */
+int loki_inihaschanged(ini_file_t *ini);
+
 /* Write the INI file back to disk, returns error code
    If 'path' is NULL, then the original file name is used by default.
  */
 int loki_writeinifile(ini_file_t *ini, const char *path);
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif

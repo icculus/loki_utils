@@ -286,6 +286,17 @@ int loki_closeinifile(ini_file_t *ini)
 	}
 }
 
+
+/* Returns a boolean value indicating if the image of the INI file in memory is in sync
+   with the file on disc */
+int loki_inihaschanged(ini_file_t *ini)
+{
+	if ( ini ) {
+		return ini->changed;
+	}
+	return 0;
+}
+
 /* Return the string corresponding to a key in the specified section of the file,
    returns NULL if could not find it */
 const char *loki_getinistring(ini_file_t *ini, const char *section, const char *key)
