@@ -136,30 +136,46 @@ void loki_2dmsg_print(float r, float g, float b, const char *str)
 
 
 #ifdef STANDALONE  // for testing only.  --ryan.
-int main(int argc, char **argv)
+static inline void do_delay(int ms)
 {
     SDL_Event event;
-    int quit_flag = 0;
+    Uint32 endtime = SDL_GetTicks() + ms;
 
-    SDL_Init(SDL_INIT_VIDEO);
-//    SDL_SetVideoMode(320, 240, 16, 0);
-    SDL_SetVideoMode(640, 480, 16, 0);
-    SDL_WM_SetCaption("loki_2dmessage.c test.", "loki_glmsg");
+    while (1)
+    {
+        if ((ms >= 0) && (SDL_GetTicks() >= endtime))
+            return;
+
+        if (SDL_PollEvent(&event) == 0)
+            SDL_Delay(1);
+        else
+        {
+            if (event.type == SDL_QUIT)
+                return;
+        } // else
+    } // while
+} // do_delay
+
+
+static inline void do_test(int w, int h)
+{
+    SDL_SetVideoMode(w, h, 16, 0);
+    SDL_WM_SetCaption("loki_2dmessage.c test.", "loki_2dmsg");
 
     if (loki_2dmsg_initialize(0.0, 0.0, 0.0, 0.0) == -1)
     {
         fprintf(stderr, "loki_2dmsg_initialize() failed!\n");
         SDL_Quit();
-        return(2);
+        exit(2);
     } // if
 
-/*
     loki_2dmsg_print(1.0, 1.0, 1.0, "This is just a test");
     loki_2dmsg_print(1.0, 1.0, 1.0, "do not panic");
     loki_2dmsg_print(1.0, 0.0, 0.0, "red");
     loki_2dmsg_print(0.0, 1.0, 0.0, "green");
     loki_2dmsg_print(0.0, 0.0, 1.0, "blue");
-*/
+
+    do_delay(5000);
 
     sdl_ShowMessage("Your OpenGL driver is too slow to play this game.\n"
                     "Driver used: [ ~/projects/Mesa-3.2/lib/libGL.so ]\n"
@@ -167,12 +183,17 @@ int main(int argc, char **argv)
                     "Email support@lokigames.com for help,\n"
                     "or call 1-714-508-2140 (9-5 PM US Pacific Time).\n");
 
-    while (quit_flag == 0)
-    {
-        SDL_WaitEvent(&event);
-        if (event.type == SDL_QUIT)
-            quit_flag = 1;
-    } // while
+    do_delay(5000);
+}
+
+
+int main(int argc, char **argv)
+{
+    SDL_Init(SDL_INIT_VIDEO);
+
+    do_test(640, 480);
+    do_test(320, 240);
+    do_test(1600, 1200);
 
     SDL_Quit();
     return(0);
