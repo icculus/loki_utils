@@ -106,118 +106,26 @@ int sdl_GetWindowPosition(int *x, int *y)
     return retval;
 }
 
-typedef struct {
-  Sint32 flags;
-  Sint32 functions;
-  Sint32 decorations;
-  Sint32 inputMode;
-  Sint32 unknown;
-} MWM_Hints;
-
-static enum { No_WM, Motif_WM, KDE_WM, GNOME_WM } wm_type;
-
-void sdl_RemoveTitleBar(void)
+void sdl_GetAbsoluteMouseCoords(int *x, int *y)
 {
     SDL_SysWMinfo info;
 
     SDL_VERSION(&info.version);
     if ( SDL_GetWMInfo(&info) > 0 ) {
-#ifdef unix
         if ( info.subsystem == SDL_SYSWM_X11 ) {
-            Atom WM_HINTS;
             Display *display;
-            Window window;
+            Window window, uncle, fucker;
+            int u;
+            unsigned int mask;
 
             info.info.x11.lock_func();
             display = info.info.x11.display;
             window = info.info.x11.window;
 
-            /* This happens in SDL 1.1 */
-            if ( window == 0 ) {
-                info.info.x11.unlock_func();
-                printf("FIXME: SDL 1.1 - Can't remove the titlebar yet\n");
-                return;
-            }
-#if 1
-            /* First try to set MWM hints */
-            WM_HINTS = XInternAtom(display, "_MOTIF_WM_HINTS", True);
-            if ( WM_HINTS != None ) { 
-#               define    MWM_HINTS_DECORATIONS    (1L << 1)
-                MWM_Hints MWMHints = { MWM_HINTS_DECORATIONS, 0, 0, 0, 0 };
-                
-                XChangeProperty(display, window, WM_HINTS, WM_HINTS, 32,
-                                PropModeReplace, (unsigned char *)&MWMHints,
-                                sizeof(MWMHints)/4);
-                wm_type = Motif_WM;
-            }
-            /* Now try to set KWM hints */
-            WM_HINTS = XInternAtom(display, "KWM_WIN_DECORATION", True);
-            if ( WM_HINTS != None ) { 
-                long KWMHints = 0;
-
-                XChangeProperty(display, window, WM_HINTS, WM_HINTS, 32,
-                                PropModeReplace, (unsigned char *)&KWMHints,
-                                sizeof(KWMHints)/4);
-                wm_type = KDE_WM;
-            }
-            /* Now try to set GNOME hints */
-            WM_HINTS = XInternAtom(display, "_WIN_HINTS", True);
-            if ( WM_HINTS != None ) { 
-                long GNOMEHints = 0;
-
-                XChangeProperty(display, window, WM_HINTS, WM_HINTS, 32,
-                                PropModeReplace, (unsigned char *)&GNOMEHints,
-                                sizeof(GNOMEHints)/4);
-                wm_type = GNOME_WM;
-            }
-#endif
-#if 0        /* The Butcher way of removing window decorations -- not polite */
-            attributes.override_redirect = True;
-            XChangeWindowAttributes(info.info.x11.display, info.info.x11.window,
-                                    CWOverrideRedirect, &attributes);
-#endif
+            XQueryPointer(display, window, &uncle, &fucker, x,y, &u,&u, &mask);
             info.info.x11.unlock_func();
         }
-#else
-#error Need to implement these functions for other systems
-#endif // unix
-    }
-}
-
-/* Looks like deleting the WM properties does the job */
-void sdl_RestoreTitleBar(void)
-{
-    SDL_SysWMinfo info;
-
-    if(!wm_type)
-      return;
-
-    SDL_VERSION(&info.version);
-    if ( SDL_GetWMInfo(&info) > 0 ) {
-        if ( info.subsystem == SDL_SYSWM_X11 ) {
-            Atom WM_HINTS;
-            Display *display;
-            Window window;
-
-            info.info.x11.lock_func();
-            display = info.info.x11.display;
-            window = info.info.x11.window;
-
-            switch(wm_type){
-                case No_WM:
-                case GNOME_WM:
-                case Motif_WM:
-                  WM_HINTS = XInternAtom(display, "_MOTIF_WM_HINTS", True);
-                  break;
-                case KDE_WM:
-                  WM_HINTS = XInternAtom(display, "KWM_WIN_DECORATION", True);
-                  break;
-            }
-            XDeleteProperty(display,window,WM_HINTS);
-
-            info.info.x11.unlock_func();
-        }
-    }
+    }  
 }
 
 static char *clipboard = NULL;
@@ -391,6 +299,145 @@ const char *sdl_GetClipboard(void)
     return(clipboard);
 }
 
+
+int sdl_DisplayImage(const char *filename, SDL_Surface *screen)
+{
+    SDL_Surface *file = SDL_LoadBMP(filename);
+  
+    if(file){
+        SDL_Rect dst = {0,0, file->w, file->h};
+        
+        dst.x = (screen->w - file->w) / 2;
+        dst.y = (screen->h - file->h) / 2;
+
+        SDL_BlitSurface(file, NULL, screen, &dst);
+        SDL_UpdateRects(screen, 1, &dst);
+        SDL_FreeSurface(file);
+        return 1;
+    }
+    return 0;
+}
+
+
+/*********************************************************************/
+/*  Old and obsolete functions                                       */
+/*********************************************************************/
+
+#if 0 /* Obsolete by SDL 1.0.2 (now three windows involved) */
+typedef struct {
+  Sint32 flags;
+  Sint32 functions;
+  Sint32 decorations;
+  Sint32 inputMode;
+  Sint32 unknown;
+} MWM_Hints;
+
+static enum { No_WM, Motif_WM, KDE_WM, GNOME_WM } wm_type;
+
+void sdl_RemoveTitleBar(void)
+{
+    SDL_SysWMinfo info;
+
+    SDL_VERSION(&info.version);
+    if ( SDL_GetWMInfo(&info) > 0 ) {
+#ifdef unix
+        if ( info.subsystem == SDL_SYSWM_X11 ) {
+            Atom WM_HINTS;
+            Display *display;
+            Window window;
+
+            info.info.x11.lock_func();
+            display = info.info.x11.display;
+            window = info.info.x11.window;
+
+            /* This happens in SDL 1.1 */
+            if ( window == 0 ) {
+                info.info.x11.unlock_func();
+                printf("FIXME: SDL 1.1 - Can't remove the titlebar yet\n");
+                return;
+            }
+#if 1
+            /* First try to set MWM hints */
+            WM_HINTS = XInternAtom(display, "_MOTIF_WM_HINTS", True);
+            if ( WM_HINTS != None ) { 
+#               define    MWM_HINTS_DECORATIONS    (1L << 1)
+                MWM_Hints MWMHints = { MWM_HINTS_DECORATIONS, 0, 0, 0, 0 };
+                
+                XChangeProperty(display, window, WM_HINTS, WM_HINTS, 32,
+                                PropModeReplace, (unsigned char *)&MWMHints,
+                                sizeof(MWMHints)/4);
+                wm_type = Motif_WM;
+            }
+            /* Now try to set KWM hints */
+            WM_HINTS = XInternAtom(display, "KWM_WIN_DECORATION", True);
+            if ( WM_HINTS != None ) { 
+                long KWMHints = 0;
+
+                XChangeProperty(display, window, WM_HINTS, WM_HINTS, 32,
+                                PropModeReplace, (unsigned char *)&KWMHints,
+                                sizeof(KWMHints)/4);
+                wm_type = KDE_WM;
+            }
+            /* Now try to set GNOME hints */
+            WM_HINTS = XInternAtom(display, "_WIN_HINTS", True);
+            if ( WM_HINTS != None ) { 
+                long GNOMEHints = 0;
+
+                XChangeProperty(display, window, WM_HINTS, WM_HINTS, 32,
+                                PropModeReplace, (unsigned char *)&GNOMEHints,
+                                sizeof(GNOMEHints)/4);
+                wm_type = GNOME_WM;
+            }
+#endif
+#if 0        /* The Butcher way of removing window decorations -- not polite */
+            attributes.override_redirect = True;
+            XChangeWindowAttributes(info.info.x11.display, info.info.x11.window,
+                                    CWOverrideRedirect, &attributes);
+#endif
+            info.info.x11.unlock_func();
+        }
+#else
+#error Need to implement these functions for other systems
+#endif // unix
+    }
+}
+
+/* Looks like deleting the WM properties does the job */
+void sdl_RestoreTitleBar(void)
+{
+    SDL_SysWMinfo info;
+
+    if(!wm_type)
+      return;
+
+    SDL_VERSION(&info.version);
+    if ( SDL_GetWMInfo(&info) > 0 ) {
+        if ( info.subsystem == SDL_SYSWM_X11 ) {
+            Atom WM_HINTS;
+            Display *display;
+            Window window;
+
+            info.info.x11.lock_func();
+            display = info.info.x11.display;
+            window = info.info.x11.window;
+
+            switch(wm_type){
+                case No_WM:
+                case GNOME_WM:
+                case Motif_WM:
+                  WM_HINTS = XInternAtom(display, "_MOTIF_WM_HINTS", True);
+                  break;
+                case KDE_WM:
+                  WM_HINTS = XInternAtom(display, "KWM_WIN_DECORATION", True);
+                  break;
+            }
+            XDeleteProperty(display,window,WM_HINTS);
+
+            info.info.x11.unlock_func();
+        }
+    }
+}
+
 void sdl_RemapWindow(void)
 {
     SDL_SysWMinfo info;
@@ -417,29 +464,9 @@ void sdl_RemapWindow(void)
         }
     }
 }
+#endif /* Obsolete by SDL 1.0.2 */
 
-void sdl_GetAbsoluteMouseCoords(int *x, int *y)
-{
-    SDL_SysWMinfo info;
-
-    SDL_VERSION(&info.version);
-    if ( SDL_GetWMInfo(&info) > 0 ) {
-        if ( info.subsystem == SDL_SYSWM_X11 ) {
-            Display *display;
-            Window window, uncle, fucker;
-            int u;
-            unsigned int mask;
-
-            info.info.x11.lock_func();
-            display = info.info.x11.display;
-            window = info.info.x11.window;
-
-            XQueryPointer(display, window, &uncle, &fucker, x,y, &u,&u, &mask);
-            info.info.x11.unlock_func();
-        }
-    }  
-}
-
+#if 0 /* Obsolete by SDL 1.0.2 (now use SDL_WM_GrabInput()) */
 static int isMouseConfined = 0;
 static int grabsKeyboard = 0;
 
@@ -518,6 +545,7 @@ void sdl_ConfineMouse(int on, int update)
 #endif // unix
     }
 }
+#endif /* Obsolete by SDL 1.0.2 */
 
 #if 0  // This is dangerous to use, because it may be called when
        // the application is unmapped, causing a fatal X11 error.
@@ -545,6 +573,7 @@ void sdl_GetInputFocus(void)
 }
 #endif
 
+#if 0 /* Obsolete by SDL 1.0.2 (now use SDL_WM_IconifyWindow()) */
 /* Once the window is iconified, it doesn't get input until the window
    manager brings it back, so sdl_IconifyWindow(0) is nearly useless.
 */
@@ -593,7 +622,9 @@ int sdl_IconifyWindow(int on)
     }
     return retval;
 }
+#endif /* Obsolete by SDL 1.0.2 */
 
+#if 0 /* Obsolete by SDL 1.0.2 (now three windows involved) */
 void sdl_AllowResize(void)
 {
     SDL_SysWMinfo info;
@@ -626,24 +657,9 @@ void sdl_AllowResize(void)
 #endif // unix
     }
 }
+#endif /* Obsolete by SDL 1.0.2 */
 
-int sdl_DisplayImage(const char *filename, SDL_Surface *screen)
-{
-    SDL_Surface *file = SDL_LoadBMP(filename);
-  
-    if(file){
-        SDL_Rect dst = {0,0, file->w, file->h};
-        
-        dst.x = (screen->w - file->w) / 2;
-        dst.y = (screen->h - file->h) / 2;
-
-        SDL_BlitSurface(file, NULL, screen, &dst);
-        SDL_UpdateRects(screen, 1, &dst);
-        SDL_FreeSurface(file);
-        return 1;
-    }
-    return 0;
-}
+/*********************************************************************/
 
 #ifdef __cplusplus
 };
