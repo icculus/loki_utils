@@ -64,10 +64,9 @@ typedef struct _loki_ini_iterator_t ini_iterator_t;
 ini_iterator_t *loki_begininisection(ini_file_t *ini, const char *section);
 
 /* Get the current key/value pair pointed to by the iterator.
-   'lkey' and 'lvalue' are the size of the buffers passed in argument to the function.
    Returns a positive value if everything was OK, or zero else.
  */
-int loki_getiniline(ini_iterator_t *iterator, char *key, int lkey, char *value, int lvalue);
+int loki_getiniline(ini_iterator_t *iterator, const char **key, const char **value);
 
 /* Iterator to the next line of the section.
    Returns zero when at the end of the section or an error occured.
@@ -84,3 +83,4 @@ void loki_freeiniiterator(ini_iterator_t *iterator);
 #endif
 
 #endif
+

@@ -57,8 +57,9 @@ int main(int argc, char **argv)
 				it = loki_begininisection(ini, section);
 				if( it ) {
 					do {
-						if ( loki_getiniline(it, key, sizeof(key), buf, sizeof(buf))) {
-							printf("%s = %s\n", key, buf);
+						const char *k, *v;
+						if ( loki_getiniline(it, &k, &v)) {
+							printf("%s = %s\n", k, v);
 						}
 					} while( loki_nextiniline(it));
 					loki_freeiniiterator(it);
