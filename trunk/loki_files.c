@@ -91,6 +91,68 @@ static int mkdirhier(const char *path)
     return(retval);
 }
 
+/* A case insensitive open function */
+
+FILE *loki_fopen_nocase(const char *file, const char *mode)
+{
+    char full_path[PATH_MAX];
+    FILE *value;
+    char *base, *sep;
+    char c;
+    DIR *dirp;
+    struct dirent *entry;
+    
+    strncpy(full_path, file, sizeof(full_path));
+    
+    value = fopen(full_path, mode);
+
+    base = full_path;
+
+    if (*base == '/')
+	base++;
+    
+    while (( value == 0 ) && base)
+    {
+	sep = strchr(base, '/');
+
+	if (sep)
+	    *sep = '\0';
+
+	c = *base;
+	*base = 0;
+	
+        dirp = opendir(full_path);
+
+	*base = c;
+	
+        if ( dirp )
+	{
+            while ((entry=readdir(dirp)) != NULL)
+	    {
+		if ( strcasecmp(entry->d_name, base) == 0 )
+		{
+                    strcpy(base, entry->d_name);
+		    break;
+                }
+            }
+            closedir(dirp);
+
+	    if (sep)
+		base = sep + 1;
+	    else
+		base = NULL;
+        }
+	else
+	    break;
+
+	if (sep)
+	    *sep = '/';
+	
+	value = fopen(full_path, mode);
+    }
+    return value;
+}
+
 FILE *loki_fopen(const char *file, const char *mode)
 {
     char path[PATH_MAX];
