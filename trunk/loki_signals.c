@@ -99,14 +99,18 @@ static void catch_signal(int sig)
                         __GLIBC__, __GLIBC_MINOR__);
             }
 #ifdef HAS_EXECINFO
-            { void *array[32]; int size, i;
+            { 
+				void *array[32]; int size, i;
+				char **syms;
                 fprintf(stderr, "Stack dump:\n");
                 fprintf(stderr, "{\n");
                 size = backtrace(array, (sizeof array)/(sizeof array[0]));
+				syms = backtrace_symbols(array, size);
                 for ( i=0; i<size; ++i ) {
-                    fprintf(stderr, "\t%p\n", array[i]);
+                    fprintf(stderr, "\t%s\n", syms[i]);
                 }
                 fprintf(stderr, "}\n");
+				free(syms);
             }
 #else
 #warning Stack dump disabled.
