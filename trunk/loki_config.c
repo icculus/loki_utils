@@ -392,7 +392,7 @@ void loki_parseargs(int argc, char *argv[], const char *extra_help)
                 remaining_args = &argv[optind];
                 return;
             case 'u':
-                loki_runupdate(0, 0);
+                loki_runupdate(argc, argv);
                 exit(0);
             case 'q':
                 loki_runqagent(NULL);
