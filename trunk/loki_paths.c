@@ -74,7 +74,12 @@ char *loki_gethomedir(void)
 /* Must be called BEFORE loki_initialize */
 void loki_setgamename(const char *n)
 {
-  strncpy(game_name, n, sizeof(game_name));
+    strncpy(game_name, n, sizeof(game_name));
+}
+
+const char *loki_getgamename(void)
+{
+    return game_name;
 }
 
 /* 
