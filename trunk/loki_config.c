@@ -289,8 +289,11 @@ void loki_printusage(char *argv0, const char *help_text)
     if ( loki_demo ) {
         printf("Technical support is only available with the full game\n");
     } else {
-        printf("Support - Phone:  1-714-508-2140 (9-5 PM US Pacific Time)\n"
-               "          E-mail: support@lokigames.com\n");
+        printf("Support - FAQ: http://faqs.lokigames.com/\n"
+               "          Web: http://fenris.lokigames.com/\n"
+               "          E-mail: support@lokigames.com\n"
+               "          Phone:  1-714-508-2140 (9-5 PM US Pacific Time)\n"
+               );
     }
     printf("\n");
     printf("Usage: %s [options]\n", argv0);
