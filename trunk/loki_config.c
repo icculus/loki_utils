@@ -32,10 +32,14 @@
 #define CONFIG_FILENAME    "userprofile.txt"
 
 /* This defines the maximum number of options recognized */
-#define MAX_OPTIONS 16
+#define MAX_OPTIONS 255
 
 /* How many builtin options ? */
+#ifndef WINDOWED_ONLY
 #define COMMON_OPTIONS 6
+#else
+#define COMMON_OPTIONS 4
+#endif
 
 /* This is a list of general configuration parameters in userprofile.txt
    and set from command-line options:
@@ -53,7 +57,18 @@ static struct option long_options[MAX_OPTIONS+1] =
   { NULL,          0, 0,  0  }
 };
 
-static const char *option_comment[MAX_OPTIONS - COMMON_OPTIONS] = {NULL,};
+static const char *option_comment[MAX_OPTIONS] =
+{
+    "Display this help message",
+    "Display the game version",
+#ifndef WINDOWED_ONLY
+    "Run the game fullscreen",
+    "Run the game in a window",
+#endif
+    "Do not access the soundcard",
+    "Do not access the CD-ROM",
+    NULL,
+};
 
 static int nb_options = COMMON_OPTIONS;
 
@@ -186,6 +201,8 @@ void loki_initconfig(void)
 
 void loki_printusage(char *argv0, const char *help_text)
 {
+    int len;
+    int spacing = 0;
     int i;
     printf("Linux version by Loki Entertainment Software\n");
     printf("http://www.lokigames.com/\n");
@@ -197,28 +214,41 @@ void loki_printusage(char *argv0, const char *help_text)
 #endif
     printf("\n");
     printf("Usage: %s [options]\n", argv0);
-    printf("\t[-h | --help]\t\tDisplay this help message\n");
-    printf("\t[-v | --version]\tDisplay the game version\n");
-#ifndef WINDOWED_ONLY
-    printf("\t[-f | --fullscreen]\tRun the game fullscreen\n");
-    printf("\t[-w | --windowed]\tRun the game in a window\n");
-#endif
-    printf("\t[-s | --nosound]\tDo not access the soundcard\n");
-    printf("\t[-c | --nocdrom]\tDo not access the CD-ROM\n");
 
-    for(i = COMMON_OPTIONS; i<nb_options; i++)
+        /* Add spacing so comments are aligned. ("\t" was not enough.) */
+    for(i = 0; i<nb_options; i++)
     {
-      printf("\t");
+        int len = strlen(long_options[i].name);
+        if (len > spacing)
+            spacing = len;
+    }
+
+    spacing += 4;  /* for extra spacing. */
+
+    for(i = 0; i < nb_options; i++)
+    {
+      printf("     [");
       if (long_options[i].val != '\0')
-        printf("[-%c | ", long_options[i].val);
+      {
+        printf("-%c", long_options[i].val);
+        if (long_options[i].name != NULL)
+            printf(" | ");
+      }
       else
-        printf("[     ");
+          printf("     ");
 
       if (long_options[i].name != NULL);
-        printf("--%s]", long_options[i].name);
+        printf("--%s", long_options[i].name);
 
-      if (option_comment[i-COMMON_OPTIONS] != NULL)
-        printf("\t%s", option_comment[i-COMMON_OPTIONS]);
+      printf("]");
+
+      if (option_comment[i] != NULL)
+      {
+        for (len = spacing - strlen(long_options[i].name); len >= 0; len--)
+            printf(" ");
+
+        printf("%s", option_comment[i]);
+      }
 
       putchar('\n');
     }
@@ -238,7 +268,7 @@ void loki_registeroption(const char *lng, char sht, const char *comment)
     long_options[nb_options].flag = NULL;
     long_options[nb_options].has_arg = 0;
     long_options[nb_options].val = sht;
-    option_comment[nb_options - COMMON_OPTIONS] = comment;
+    option_comment[nb_options] = comment;
     nb_options ++;
     long_options[nb_options] = fin_opt;
   }
