@@ -442,17 +442,13 @@ ini_iterator_t *loki_begininisection(ini_file_t *ini, const char *section)
    'lkey' and 'lvalue' are the size of the buffers passed in argument to the function.
    Returns a positive value if everything was OK, or zero else.
  */
-int loki_getiniline(ini_iterator_t *iterator, char *key, int lkey, char *value, int lvalue)
+int loki_getiniline(ini_iterator_t *iterator, const char **key, const char **value)
 {
 	if ( ! iterator || ! iterator->current ) {
 		return 0;
 	}
-	strncpy(key, iterator->current->key, lkey);
-	if (iterator->current->value) {
-		strncpy(value, iterator->current->value, lvalue);
-	} else {
-		*value = '\0';
-	}
+	*key = iterator->current->key;
+	*value = iterator->current->value;
 	return 1;
 }
 
