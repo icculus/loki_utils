@@ -179,8 +179,9 @@ done:
 SDL_Surface *sdl_LoadPCX(const char *filename)
 {
   SDL_RWops *src = SDL_RWFromFile(filename,"rb");
-  if(IMG_isPCX(src))
+  if(IMG_isPCX(src)) {
+    SDL_RWseek(src, 0, SEEK_SET);
 	return IMG_LoadPCX_RW(src);
-  else
-	return NULL;
+  }
+  return NULL;
 }
