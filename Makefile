@@ -12,7 +12,7 @@ AR = ar rcs
 
 
 CFLAGS += -Wall
-INCLUDES =  -I../SDL/include
+INCLUDES =  -I/usr/local/include/SDL
 CFLAGS += $(INCLUDES)
 ifeq ($(DEBUG),true)
 CFLAGS += -g

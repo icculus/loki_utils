@@ -28,6 +28,7 @@
 #endif
 #define HAS_EXECINFO
 #endif
+#include <unistd.h>
 #include <signal.h>
 
 #include "loki_utils.h"
@@ -135,4 +136,10 @@ void loki_initsignals(void)
     // Add signal handlers
     signal(SIGABRT, catch_signal);
     signal(SIGSEGV, catch_signal);
+}
+
+void loki_breakdebugger(void)
+{
+	/* Force GDB to stop by sending a TRAP signal to the current process */
+	kill(getpid(), SIGTRAP);
 }
