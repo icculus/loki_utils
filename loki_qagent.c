@@ -26,7 +26,7 @@
 void loki_runqagent(const char *stack_trace_file)
 {
 	int i;
-	const char *argv[10];
+	const char *argv[12];
 
 	/* Build the command line for the QAgent script */
 	i = 0;
@@ -37,6 +37,8 @@ void loki_runqagent(const char *stack_trace_file)
 	argv[i++] = loki_getdatapath();
 	argv[i++] = "--game_prefs";
 	argv[i++] = loki_getprefpath();
+	argv[i++] = "--game_cdrom";
+	argv[i++] = loki_getcdrompath();
 	if ( stack_trace_file && *stack_trace_file ) {
 		argv[i++] = "--game_stack";
 		argv[i++] = stack_trace_file;
