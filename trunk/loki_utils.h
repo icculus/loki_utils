@@ -141,6 +141,18 @@ extern int loki_getmountpoint(const char *device, char *mntpt, int max_size);
  */
 extern unsigned int loki_getprimaryIP(void);
 
+/* This function launches the user's web browser with the given URL.
+   The browser detection can be overridden by the LOKI_BROWSER environment
+   variable, which is used as the format string: %s is replaced with the
+   URL to be launched.
+   This function returns -1 if a browser could not be found, or the return
+   value of system("browser command") if one is available.
+   There is no way to tell whether or not the URL was valid.
+
+   WARNING: This function should NOT be called when a video mode is set.
+ */
+extern int loki_launchURL(const char *url);
+
 #ifdef __cplusplus
 };
 #endif
