@@ -479,6 +479,8 @@ void sdl_ConfineMouse(int on, int update)
 			    int numTries, grabResult;
                 /* The sync is required so the window is available */
                 XSync(display, False);
+				/* Grab the input focus so that the cursor is moved to the window */
+				XSetInputFocus(display, window, RevertToNone, CurrentTime);
 				for (numTries = 0; numTries < 10; numTries++) {
 				  grabResult = XGrabPointer(display, window,
 											True, ButtonPressMask|ButtonReleaseMask|ButtonMotionMask
