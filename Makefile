@@ -9,7 +9,7 @@ DEBUG = true
 CC = gcc
 CXX = g++
 AR = ar rcs
-ARCH = $(shell /loki/scripts/print_arch)
+ARCH = $(shell ./print_arch)
 GLMSG = false
 
 INCLUDES += -I/usr/X11R6/include
