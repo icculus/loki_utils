@@ -90,6 +90,9 @@ extern double loki_getconfig_float(const char *key);
 /* This function only modifies the run-time config hashtable */
 extern void loki_insertconfig(const char *key, const char *value);
 
+/* This function deletes a key and value pair from the runtime hashtable */
+extern void loki_deleteconfig(const char *key);
+
 /* This function writes the current configuration to a parsable INI file */
 extern void loki_writeconfig(const char *file);
 
