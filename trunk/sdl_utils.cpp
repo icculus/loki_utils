@@ -15,6 +15,13 @@
 extern "C" {
 #endif
 
+static SDL_Surface *sdl_screen = NULL;
+
+void sdl_SetVideoSurface(SDL_Surface *screen)
+{
+	sdl_screen = screen;
+}
+
 int sdl_GetScreenSize(int *width, int *height)
 {
     SDL_SysWMinfo info;
@@ -454,14 +461,13 @@ void sdl_ToggleConfineMouse( void )
 void sdl_ConfineMouse(int on, int update)
 {
     SDL_SysWMinfo info;
-    extern SDL_Surface *SDL_VideoSurface;
 
-    if(!SDL_VideoSurface && update){
+    if(!sdl_screen && update){
       isMouseConfined = on; // Only initialize the variable
       return;
     }
 
-    if( SDL_VideoSurface->flags & SDL_FULLSCREEN )
+    if( sdl_screen->flags & SDL_FULLSCREEN )
         return;
 
     SDL_VERSION(&info.version);

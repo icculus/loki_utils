@@ -7,18 +7,22 @@
 # This should be moved in a global configuration file
 DEBUG = true
 CC = gcc
-CPP = g++
+CXX = g++
 AR = ar rcs
 
 
 CFLAGS += -Wall
+INCLUDES =  -I../SDL/include
+CFLAGS += $(INCLUDES)
 ifeq ($(DEBUG),true)
 CFLAGS += -g
 else
 CFLAGS += -O2
 endif
 ifneq ($(sdl_utils), false)
-CFLAGS += -D_REENTRANT -D_SDL_STATIC_LIB -I../SDL/include
+# Comment the following line if using dynamic SDL
+# CFLAGS += -D_SDL_STATIC_LIB
+CFLAGS += -D_REENTRANT
 endif
 ifeq ($(windowed_only), true)
 CFLAGS += -DWINDOWED_ONLY
@@ -27,10 +31,14 @@ endif
 CXXFLAGS = $(CFLAGS)
 .SUFFIXES: .c .cpp
 
-OBJS = loki_config.o loki_network.o loki_paths.o loki_signals.o loki_utils.o
+CSRC	= loki_config.c loki_network.c loki_paths.c loki_signals.c loki_utils.c
+CPPSRC	= 
 ifneq ($(sdl_utils), false)
-OBJS += sdl_utils.o
+CSRC	+= sdl_pcx.c
+CPPSRC	+= sdl_utils.cpp
 endif
+
+OBJS = $(CSRC:.c=.o) $(CPPSRC:.cpp=.o) 
 
 TARGET = libloki.a
 
@@ -38,10 +46,19 @@ TARGET = libloki.a
 	$(CC) $(CFLAGS) -c $<
 
 .cpp.o:
-	$(CPP) $(CXXFLAGS) -c $<
+	$(CXX) $(CXXFLAGS) -c $<
 
 $(TARGET): $(OBJS)
 	$(AR) $(TARGET) $(OBJS)
 
 clean:
 	rm -f $(OBJS) $(TARGET)
+
+dep: depend
+
+depend:
+	$(CXX) -MM $(INCLUDES) $(CSRC) $(CPPSRC) > .depend
+
+ifeq ($(wildcard .depend),.depend)
+include .depend
+endif
