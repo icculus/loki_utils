@@ -81,22 +81,23 @@ typedef struct config_element {
 
 static config_element *config_list = NULL;
 
-static char* config_default = NULL;
+static char* loki_config_default = NULL;
 
 void loki_configdefault( const char* dflt )
 {
 
-    if( config_default ) {
-	free( config_default );
-	config_default = NULL;
+    if( loki_config_default ) {
+	free( loki_config_default );
+	loki_config_default = NULL;
     }
 
     if( dflt ) {
 	int length = strlen( dflt );
-	config_default = (char*) malloc( length + 1 );
+	loki_config_default = (char*) malloc( length + 1 );
 
-	if( config_default ) {
-	    strncpy( config_default, dflt, length );
+	if( loki_config_default ) {
+	    strncpy( loki_config_default, dflt, length );
+            loki_config_default[length] = '\0';
 	}
 
     }
@@ -321,7 +322,7 @@ void loki_parseargs(int argc, char *argv[], const char *extra_help)
 /* This function returns a default value from the configuration */
 static char *loki_getconfig_default(const char *key)
 {
-    return config_default;
+    return loki_config_default;
 }
 
 /* This function returns a string value from the configuration */
@@ -348,7 +349,7 @@ char *loki_getconfig_str(const char *key)
 int loki_getconfig_bool(const char *key)
 {
     char *value;
-    int retval = 0;
+    int retval;
 
     value = loki_getconfig_str(key);
 
@@ -360,7 +361,6 @@ int loki_getconfig_bool(const char *key)
      * Otherwise, return true.
      */
     if( value ) {
-
 	if( !strcasecmp( value, "false" ) ) {
 	    retval = 0;
 	} else if( !strcasecmp( value, "no" ) ) {
@@ -374,7 +374,6 @@ int loki_getconfig_bool(const char *key)
 	} else {
 	    retval = 1;
 	}
-
     } else {
 	retval = 0;
     }
