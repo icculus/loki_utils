@@ -10,6 +10,7 @@ CC = gcc
 CXX = g++
 AR = ar rcs
 ARCH = $(shell /loki/scripts/print_arch)
+GLMSG = true
 
 INCLUDES += -I/usr/X11R6/include
 CFLAGS += -Wall -fsigned-char
@@ -34,19 +35,25 @@ ifeq ($(DEMO), true)
 CFLAGS += -DLINUX_DEMO
 endif
 
-
 CXXFLAGS = $(CFLAGS)
 .SUFFIXES: .c .cpp
 
 CSRC	= loki_config.c loki_network.c loki_paths.c loki_signals.c \
           loki_qagent.c loki_utils.c loki_inifile.c loki_cpuinfo.c \
-          loki_launchurl.c loki_glmessage.c loki_2dmessage.c loki_fontdata.c
+          loki_launchurl.c
 
 CPPSRC	= 
 ifneq ($(sdl_utils), false)
-CSRC	+= sdl_pcx.c
+CSRC	+= sdl_pcx.c loki_2dmessage.c loki_fontdata.c
 CPPSRC	+= sdl_utils.cpp
 CFLAGS  += $(shell sdl-config --cflags)
+
+ifeq ($(strip $(GLMSG)),true)
+CSRC += loki_glmessage.c
+else
+CFLAGS += -DLOKI_NO_GLMSG
+endif
+
 endif
 
 OBJS := $(CSRC:%.c=$(ARCH)/%.o) $(CPPSRC:%.cpp=$(ARCH)/%.o) 

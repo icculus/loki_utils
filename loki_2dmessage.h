@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 
-int loki_2dmsg_initialize(float bgr, float bgg, float bgb, float bga);
+int loki_2dmsg_initialize(float bgr, float bgg, float bgb);
 void loki_2dmsg_print(float r, float g, float b, const char *str);
 
 #ifdef __cplusplus

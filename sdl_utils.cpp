@@ -12,7 +12,10 @@
 #include "loki_utils.h"
 #include "sdl_utils.h"
 
+#ifndef LOKI_NO_GLMSG
 #include "loki_glmessage.h"
+#endif
+
 #include "loki_2dmessage.h"
 
 #ifdef unix
@@ -23,16 +26,21 @@
 extern "C" {
 #endif
 
+#ifdef LOKI_NO_GLMSG
+typedef float GLfloat;
+#define loki_glmsg_initialize(bgr, bgg, bgb) fprintf(stderr, "No GLmsg support!\n")
+#define loki_glmsg_print(bgr, bgg, bgb, txt) fprintf(stderr, "GLmsg: %s\n", txt)
+#endif
+
 static inline void sdl_showmsg_print(float, float, float, const char *);
 
 
-static inline void sdl_showmsg_initialize(float bgr, float bgg,
-                                          float bgb, float bga)
+static inline void sdl_showmsg_initialize(float bgr, float bgg, float bgb)
 {
     if (SDL_GetVideoSurface()->flags & SDL_OPENGL)
-        loki_glmsg_initialize(bgr, bgg, bgb, bga);
+        loki_glmsg_initialize(bgr, bgg, bgb);
     else
-        loki_2dmsg_initialize(bgr, bgg, bgb, bga);
+        loki_2dmsg_initialize(bgr, bgg, bgb);
 }
 
 static inline void sdl_showmsg_splitprint(GLfloat r, GLfloat g, GLfloat b,
@@ -87,7 +95,7 @@ void sdl_ShowMessage(const char *fmt, ...)
     vsnprintf(buffer, sizeof (buffer), fmt, ap);
     va_end(ap);
 
-    sdl_showmsg_initialize(0.0, 0.0, 0.0, 0.0);
+    sdl_showmsg_initialize(0.0, 0.0, 0.0);
 
     do
     {

@@ -40,7 +40,7 @@ static int texty = 0;
  *
  *  returns -1 on error, 0 on success.
  */
-int loki_2dmsg_initialize(float bgr, float bgg, float bgb, float bga)
+int loki_2dmsg_initialize(float bgr, float bgg, float bgb)
 {
     SDL_Surface *surface = SDL_GetVideoSurface();
 
@@ -162,7 +162,7 @@ static inline void do_test(int w, int h)
     SDL_SetVideoMode(w, h, 16, 0);
     SDL_WM_SetCaption("loki_2dmessage.c test.", "loki_2dmsg");
 
-    if (loki_2dmsg_initialize(0.0, 0.0, 0.0, 0.0) == -1)
+    if (loki_2dmsg_initialize(0.0, 0.0, 0.0) == -1)
     {
         fprintf(stderr, "loki_2dmsg_initialize() failed!\n");
         SDL_Quit();
