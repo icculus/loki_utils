@@ -98,6 +98,9 @@ extern char *loki_getcdromfile(const char *file, char *filepath, int maxpath);
 /* This function returns the home directory for the current user */
 extern char *loki_gethomedir(void);
 
+/* Equivalent to the Win32 SplitPath() call */
+void loki_splitpath(const char *path, char *drive, char *dir, char *fname, char *ext);
+
 /* Returns the available disk space in kilobytes on the filesystem that contains "path" */
 extern size_t loki_getavailablespace(const char *path);
 
