@@ -228,14 +228,8 @@ ini_file_t *loki_openinifile(const char *path)
 			}
 			break;
 		case _value:
-			/* A comment on the same line as a key=value line must be have a blank character before ; or # */
-			if ( isblank(prevc) && (c == ';' || c == '#') ) {
-				*ptr = '\0';
-				trim_spaces(buf);
-				l->value = strdup(buf);
-				ptr = buf;
-				st = _comment;
-			} else if ( c == '\n' ) {
+			/* No more comments are allowed on the same line as an affectation */
+			if ( c == '\n' ) {
 				*ptr = '\0';
 				trim_spaces(buf);
 				l->value = strdup(buf);
