@@ -40,7 +40,7 @@ CXXFLAGS = $(CFLAGS)
 
 CSRC	= loki_config.c loki_network.c loki_paths.c loki_signals.c \
           loki_qagent.c loki_utils.c loki_inifile.c loki_cpuinfo.c \
-          loki_launchurl.c #loki_glmessage.c
+          loki_launchurl.c loki_glmessage.c loki_2dmessage.c loki_fontdata.c
 
 CPPSRC	= 
 ifneq ($(sdl_utils), false)
