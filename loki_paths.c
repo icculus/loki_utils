@@ -290,8 +290,21 @@ int loki_getmountpoint(const char *device, char *mntpt, int max_size)
     if( mountfp != NULL ) {
         mounted = 0;
         while( (mntent = getmntent( mountfp )) != NULL ){
-			if( strncmp(mntent->mnt_fsname, "/dev", 4) || 
-				realpath(mntent->mnt_fsname, mntdevpath) == NULL ) {
+			char *tmp, mntdev[1024];
+
+			strcpy(mntdev, mntent->mnt_fsname);
+			if ( strcmp(mntent->mnt_type, "supermount") == 0 ) {
+				tmp = strstr(mntent->mnt_opts, "dev=");
+				if ( tmp ) {
+					strcpy(mntdev, tmp+strlen("dev="));
+					tmp = strchr(mntdev, ',');
+					if ( tmp ) {
+						*tmp = '\0';
+					}
+				}
+			}
+			if( strncmp(mntdev, "/dev", 4) || 
+				realpath(mntdev, mntdevpath) == NULL ) {
 				continue;
 			}
             if( strcmp( mntdevpath, devpath ) == 0 ){
@@ -310,8 +323,16 @@ int loki_getmountpoint(const char *device, char *mntpt, int max_size)
 #ifdef __TEST_MAIN
 int main(int argc, char *argv[])
 {
+	char cdrom[1024];
+
     loki_initpaths(argv[0]);
     printf("Data path: %s\n", loki_getdatapath());
     printf("Pref path: %s\n", loki_getprefpath());
+    if ( loki_getmountpoint("/dev/cdrom", cdrom, sizeof(cdrom)) ) {
+		printf("CD-ROM at: %s\n", cdrom);
+	} else {
+		printf("CD-ROM not detected\n");
+	}
+	exit(0);
 }
 #endif
