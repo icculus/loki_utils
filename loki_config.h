@@ -105,6 +105,9 @@ extern void loki_writeconfig(const char *file);
    This must be called AFTER loki_initialize() for it to make any sense. */
 extern char **loki_getarguments(void);
 
+/* This function returns a string corresponding to the current architecture */
+extern const char *loki_getarch(void);
+
 #ifdef __cplusplus
 };
 #endif

@@ -239,7 +239,7 @@ void loki_writeconfig(const char *file)
 }
 
 /* This was modified from setup - if you modify either, update the other */
-const char *detect_arch(void)
+const char *loki_getarch(void)
 {
     const char *arch;
 
@@ -421,7 +421,7 @@ void loki_parseargs(int argc, char *argv[], const char *extra_help)
             case 'v':
                 printf("%s\n", loki_getgamedescription());
                 printf("Built with glibc-%d.%d on %s\n",
-                        __GLIBC__, __GLIBC_MINOR__, detect_arch());
+                        __GLIBC__, __GLIBC_MINOR__, loki_getarch());
                 exit(0);
             case 'h':
                 loki_printusage(argv[0], extra_help);
