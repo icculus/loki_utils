@@ -131,6 +131,12 @@ void sdl_RemoveTitleBar(void)
             display = info.info.x11.display;
             window = info.info.x11.window;
 
+            /* This happens in SDL 1.1 */
+            if ( window == 0 ) {
+                info.info.x11.unlock_func();
+                printf("FIXME: SDL 1.1 - Can't remove the titlebar yet\n");
+                return;
+            }
 #if 1
             /* First try to set MWM hints */
             WM_HINTS = XInternAtom(display, "_MOTIF_WM_HINTS", True);
