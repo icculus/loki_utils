@@ -22,7 +22,6 @@ extern void sdl_ConfineGrabsKeyboard(int flag);
 extern void sdl_ConfineMouse(int on, int update);
 extern void sdl_ToggleConfineMouse(void);
 extern void sdl_IconifyWindow(int on);
-extern int sdl_IsWindowIconic(void);
 extern void sdl_AllowResize(void);
 extern void sdl_RemapWindow(void);
 
