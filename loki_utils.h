@@ -20,8 +20,10 @@
 #ifndef _LOKI_UTILS_H
 #define _LOKI_UTILS_H
 
-/* For size_t. */
+#include <stdio.h>
 #include <stddef.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "loki_config.h"
 
@@ -128,6 +130,13 @@ extern char *loki_gethomedir(void);
 
 /* Equivalent to the Win32 SplitPath() call */
 void loki_splitpath(const char *path, char *drive, char *dir, char *fname, char *ext);
+
+/* File functions which look in the prefs path for write access,
+   and the prefs path then the data path then the cdrom path for write access.
+*/
+extern int loki_stat(const char *file, struct stat *statb);
+extern FILE *loki_fopen(const char *file, const char *mode);
+extern int loki_open(const char *file, int flags, mode_t mode);
 
 /* Returns the available disk space in kilobytes on the filesystem that contains "path" */
 extern size_t loki_getavailablespace(const char *path);
