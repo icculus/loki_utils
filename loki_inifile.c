@@ -42,6 +42,7 @@ struct section {
 struct _loki_ini_file_t {
 	char path[PATH_MAX];
 	int changed; /* Boolean */
+	int userreg; /* Special parsing code for the .loki file */
 	struct section *sections, *iterator;
 };
 
@@ -118,7 +119,7 @@ static void trim_spaces(char *str)
 }
 
 /* Create a new INI file from scratch */
-ini_file_t * loki_createinifile(const char *path)
+ini_file_t * loki_createinifile_internal(const char *path, int userreg)
 {
 	ini_file_t *ini;
 	FILE *fd;
@@ -130,6 +131,7 @@ ini_file_t * loki_createinifile(const char *path)
 
 	ini->sections = ini->iterator = NULL;
 	ini->changed = 0;
+	ini->userreg = userreg;
 	strncpy(ini->path, path, PATH_MAX);
 	fd = fopen(path, "wb");
 	if( ! fd ) {
@@ -142,8 +144,20 @@ ini_file_t * loki_createinifile(const char *path)
 	return ini;
 }
 
+ini_file_t * loki_createinifile(const char *path)
+{
+	return loki_createinifile_internal(path, 0);
+}
+
+ini_file_t *loki_openinifile_internal(const char *path, int userreg);
+
 /* Open and loads the INI file, returns error code */
 ini_file_t *loki_openinifile(const char *path)
+{
+	return loki_openinifile_internal(path, 0);
+}
+
+ini_file_t *loki_openinifile_internal(const char *path, int userreg)
 {
 	ini_file_t *ini;
 	FILE *fd;
@@ -160,6 +174,7 @@ ini_file_t *loki_openinifile(const char *path)
 
 	ini->sections = ini->iterator = NULL;
 	ini->changed = 0;
+	ini->userreg = userreg;
 	fd = fopen(path, "rb");
 	if( ! fd ) {
 		free(ini);
@@ -196,7 +211,7 @@ ini_file_t *loki_openinifile(const char *path)
 			default:
 				if ( isblank(c) ) {
 					break;
-				} else if ( ! s->name ) {
+				} else if ( ! s->name && ! userreg ) {
 					fprintf(stderr,"Parse error at beginning of %s INI file (line %d)!\n", path, line_number);
 					fclose(fd);
 					free_section(ini->sections);
@@ -365,7 +380,7 @@ const char *loki_getinistring(ini_file_t *ini, const char *section, const char *
 	}
 
 	for ( s = ini->sections ; s ; s = s->next ) {
-		if ( s->name && ! strcasecmp(section, s->name) ) {
+		if ( (s->name && ! strcasecmp(section, s->name)) || ini->userreg ) {
 			struct line *l;
 			for ( l = s->lines; l ; l = l->next ) {
 				if ( l->key && ! strcasecmp(key, l->key) ) {
@@ -387,7 +402,7 @@ int loki_putinistring(ini_file_t *ini, const char *section, const char *key, con
 	}
 
 	for ( s = ini->sections ; s ; s = s->next ) {
-		if ( s->name && ! strcasecmp(section, s->name) ) {
+		if ( (s->name && section && ! strcasecmp(section, s->name)) || ini->userreg ) {
 			struct line *l;
 			for ( l = s->lines; l ; l = l->next ) {
 				if ( l->key && ! strcasecmp(key, l->key) ) {
@@ -481,7 +496,7 @@ ini_line_t *loki_begin_iniline(ini_file_t *ini, const char *section)
 	}
 
 	for ( s = ini->sections ; s ; s = s->next ) {
-		if ( s->name && ! strcasecmp(section, s->name) ) {
+		if ( (s->name && ! strcasecmp(section, s->name)) || ini->userreg ) {
 			ini_line_t *ret = malloc(sizeof(ini_line_t));
 			ret->ini = ini;
 			ret->current = s->lines;
