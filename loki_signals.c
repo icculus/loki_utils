@@ -60,6 +60,33 @@ static void print_crash(int log, const char *fmt, ...)
     }
 }
 
+void loki_printstack(int level, int log)
+{
+#ifdef HAS_EXECINFO
+    void *array[64]; int size, i;
+#if 0 /*(__GLIBC__ > 2) || ((__GLIBC__ == 2) && (__GLIBC_MINOR__ >= 1))*/
+    char **syms;
+#endif
+    print_crash(log, "Stack dump:\n");
+    print_crash(log, "{\n");
+    size = backtrace(array, (sizeof array)/(sizeof array[0]));
+#if 0 /*(__GLIBC__ > 2) || ((__GLIBC__ == 2) && (__GLIBC_MINOR__ >= 1))*/
+    syms = backtrace_symbols(array, size);
+    for ( i=level+1; i<size; ++i ) {
+        print_crash(log, "\t%s\n", syms[i]);
+    }
+    free(syms);
+#else
+    for ( i=2; i<size; ++i ) {
+        print_crash(log, "\t%p\n", array[i]);
+    }
+#endif
+    print_crash(log, "}\n");
+#else
+#warning Stack dump disabled.
+#endif
+}
+
 // Try to clean up gracefully on a signal, and terminate us if we fail
 static void catch_signal(int sig)
 {
@@ -108,6 +135,7 @@ static void catch_signal(int sig)
             print_crash(log, "%s\n", loki_getgamedescription());
             print_crash(log, "Built with glibc-%d.%d on %s\n",
                         __GLIBC__, __GLIBC_MINOR__, loki_getarch());
+            loki_printstack(1, log);
             fatal_crash = 1;
 #ifdef LINUX_BETA
             fprintf(stderr, "Please file a full bug report in Fenris,\n"
@@ -122,31 +150,7 @@ static void catch_signal(int sig)
             print_crash(log, "%s\n", loki_getgamedescription());
             print_crash(log, "Built with glibc-%d.%d on %s\n",
                         __GLIBC__, __GLIBC_MINOR__, loki_getarch());
-#ifdef HAS_EXECINFO
-            { 
-                void *array[64]; int size, i;
-#if 0 /*(__GLIBC__ > 2) || ((__GLIBC__ == 2) && (__GLIBC_MINOR__ >= 1))*/
-                char **syms;
-#endif
-                print_crash(log, "Stack dump:\n");
-                print_crash(log, "{\n");
-                size = backtrace(array, (sizeof array)/(sizeof array[0]));
-#if 0 /*(__GLIBC__ > 2) || ((__GLIBC__ == 2) && (__GLIBC_MINOR__ >= 1))*/
-                syms = backtrace_symbols(array, size);
-                for ( i=1; i<size; ++i ) {
-                    print_crash(log, "\t%s\n", syms[i]);
-                }
-                free(syms);
-#else
-                for ( i=2; i<size; ++i ) {
-                    print_crash(log, "\t%p\n", array[i]);
-                }
-#endif
-                print_crash(log, "}\n");
-            }
-#else
-#warning Stack dump disabled.
-#endif
+            loki_printstack(1, log);
             fatal_crash = 1;
 
 #ifdef LINUX_BETA

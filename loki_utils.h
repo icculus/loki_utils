@@ -54,6 +54,11 @@ extern void loki_initialize(int argc, char *argv[], const char *extra_help);
 /* This function initializes crash signal handlers */
 extern void loki_initsignals(void);
 
+/* This function prints out a stack trace to the log file descriptor.
+   'level' should usually be 0
+ */
+extern void loki_printstack(int level, int log);
+
 /* This function sets function that is called to clean up the application
    after a fatal signal is caught and handled.  If the application causes
    a fatal signal while this function is called, it calls _exit(-1);
