@@ -128,6 +128,18 @@ void sdl_GetAbsoluteMouseCoords(int *x, int *y)
     }  
 }
 
+void sdl_ToggleConfineMouse(void)
+{
+    SDL_GrabMode mode;
+
+    mode = SDL_WM_GrabInput(SDL_GRAB_QUERY);
+    if ( mode == SDL_GRAB_ON ) {
+        SDL_WM_GrabInput(SDL_GRAB_OFF);
+    } else {
+        SDL_WM_GrabInput(SDL_GRAB_ON);
+    }
+}
+
 static char *clipboard = NULL;
 
 int sdl_ClipboardFilter(const SDL_Event *event)
