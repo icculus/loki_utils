@@ -285,7 +285,11 @@ void loki_parseargs(int argc, char *argv[], const char *extra_help)
     int i;
    
     for(i=0; i<nb_options; i++)
-      short_options[i] = long_options[i].val;
+    {
+        if (long_options[i].val != '\0')
+            short_options[i] = long_options[i].val;
+    }
+
     short_options[i] = '\0';
 
     while (1) {  /* Loop terminates when getopt returns -1 and we return */
