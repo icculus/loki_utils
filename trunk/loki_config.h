@@ -35,6 +35,9 @@ extern "C" {
 */
 extern void loki_initconfig(void);
 
+/* Set the default value for config names if they are not found. */
+extern void loki_configdefault( const char* dflt );
+
 /* This registers a new command-line option switch.
    This functions needs to be called BEFORE any call to loki_parseargs or loki_initialize
  */
@@ -44,6 +47,9 @@ extern void loki_registeroption(const char *lng, char sht, const char *comment);
    This function is called by loki_initialize().
 */
 extern void loki_parseargs(int argc, char *argv[], const char *extra_help);
+
+/* This function displays usage information to stdout. */
+extern void loki_printusage( char* argv0, const char* help_text );
 
 /* This function returns a string value from the configuration */
 extern char *loki_getconfig_str(const char *key);
