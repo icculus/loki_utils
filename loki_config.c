@@ -305,8 +305,25 @@ int loki_getconfig_bool(const char *key)
 
     value = loki_getconfig_str(key);
 
+    /* Okay, here's how we do it:
+     * If value is NULL, return false.
+     * If the value is "false", return false.
+     * If the value is "no", return false.
+     * If the value is "", return false.
+     * Otherwise, return true.
+     */
     if( value ) {
-	return 1;
+
+	if( !strcasecmp( value, "false" ) ) {
+	    return 0;
+	} else if( !strcasecmp( value, "no" ) ) {
+	    return 0;
+	} else if ( !strcasecmp( value, "" ) ) {
+	    return 0;
+	} else {
+	    return 1;
+	}
+
     } else {
 	return 0;
     }
