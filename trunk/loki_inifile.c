@@ -22,6 +22,7 @@
 #include <string.h>
 #include <limits.h>
 #include <ctype.h>
+#include <unistd.h>
 
 #include "loki_inifile.h"
 
@@ -160,6 +161,10 @@ ini_file_t *loki_openinifile(const char *path)
 	ini->fd = fopen(path, "rb");
 	if( ! ini->fd ) {
 		free(ini);
+		/* Create the file if necessary */
+		if ( access(path, F_OK) < 0 ) {
+			return loki_createinifile(path);
+		}
 		return NULL;
 	}
 	strncpy(ini->path, path, PATH_MAX);
