@@ -45,8 +45,10 @@ static struct option long_options[MAX_OPTIONS+1] =
   { "help",        0, 0, 'h' },
   { "version",     0, 0, 'v' },
   { "fullscreen",  0, 0, 'f' },
+#ifndef WINDOWED_ONLY
   { "windowed",    0, 0, 'w' },
   { "nosound",     0, 0, 's' },
+#endif
   { "nocdrom",     0, 0, 'c' },
   { NULL,          0, 0,  0  }
 };
@@ -172,8 +174,10 @@ void loki_printusage(char *argv0, const char *help_text)
     printf("Usage: %s [options]\n", argv0);
     printf("\t[-h | --help]\t\tDisplay this help message\n");
     printf("\t[-v | --version]\tDisplay the game version\n");
+#ifndef WINDOWED_ONLY
     printf("\t[-f | --fullscreen]\tRun the game fullscreen\n");
     printf("\t[-w | --windowed]\tRun the game in a window\n");
+#endif
     printf("\t[-s | --nosound]\tDo not access the soundcard\n");
     printf("\t[-c | --nocdrom]\tDo not access the CD-ROM\n");
 	for(i = COMMON_OPTIONS; i<nb_options; i++)
