@@ -21,6 +21,10 @@ void sdl_SetVideoSurface(SDL_Surface *screen)
 {
 	sdl_screen = screen;
 }
+SDL_Surface *sdl_GetVideoSurface(void)
+{
+	return sdl_screen;
+}
 
 int sdl_GetScreenSize(int *width, int *height)
 {
