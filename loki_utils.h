@@ -56,7 +56,13 @@ extern void loki_signalcleanup(void (*cleanup)(void));
 
 /* This function simulates a debugger breakpoint (crashes if not in GDB!) */
 #ifndef NDEBUG
+#ifdef __i386
+#define loki_breakdebugger() { __asm__("int $03"); }
+#else
+/* We define this as a function so that we don't have to include
+   signals.h in programs for the SIGTRAP definition */
 extern void loki_breakdebugger(void);
+#endif
 #else
 #define loki_breakdebugger()
 #endif
