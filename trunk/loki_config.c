@@ -35,52 +35,16 @@
 /* This defines the maximum number of options recognized */
 #define MAX_OPTIONS 255
 
-/* How many builtin options ? */
-#ifndef WINDOWED_ONLY
-#define COMMON_OPTIONS 8
-#else
-#define COMMON_OPTIONS 6
-#endif
-
 /* This is a list of general configuration parameters in userprofile.txt
    and set from command-line options:
 */
-static struct option long_options[MAX_OPTIONS+1] =
-{
-  { "help",        0, 0, 'h' },
-  { "version",     0, 0, 'v' },
-#ifndef WINDOWED_ONLY
-  { "fullscreen",  0, 0, 'f' },
-  { "windowed",    0, 0, 'w' },
-#endif
-  { "nosound",     0, 0, 's' },
-  { "nocdrom",     0, 0, 'c' },
-  { "update",      0, 0, 'u' },
-  { "qagent",      0, 0, 'q' },
-  { NULL,          0, 0,  0  }
-};
-static int optional[MAX_OPTIONS+1] = { 0 };
-
-static const char *option_comment[MAX_OPTIONS] =
-{
-    "Display this help message",
-    "Display the game version",
-#ifndef WINDOWED_ONLY
-    "Run the game fullscreen",
-    "Run the game in a window",
-#endif
-    "Do not access the soundcard",
-    "Do not access the CD-ROM",
-    "Run the Loki auto-update tool",
-    "Run the Loki QAgent support tool",
-    NULL,
-};
+static int nb_options = 0;
+static struct option long_options[MAX_OPTIONS+1];
+static int optional[MAX_OPTIONS];
+static const char *option_comment[MAX_OPTIONS];
 
 static char **remaining_args = NULL;
 
-
-
-static int nb_options = COMMON_OPTIONS;
 
 /* For now, we use a simple linked-list implementation */
 typedef struct config_element {
@@ -254,8 +218,15 @@ void loki_initconfig(void)
 /* Creates an INI file with a dump of the current configuration */
 void loki_writeconfig(const char *file)
 {
-    ini_file_t *ini = loki_createinifile_internal(file, 0);
+    ini_file_t *ini;
+    char configfile[PATH_MAX];
 
+    /* If file is NULL, default to the preferences for this game */
+    if ( ! file ) {
+        sprintf(configfile, "%s/%s", loki_getprefpath(), CONFIG_FILENAME);
+        file = configfile;
+    }
+    ini = loki_createinifile_internal(file, 0);
     if ( ini ) {
         config_element *pip;
 
@@ -288,7 +259,6 @@ const char *detect_arch(void)
     return arch;
 }
 
-
 /* Make this easier to change from the application code */
 #ifdef LINUX_DEMO
 int loki_demo = 1;
@@ -306,6 +276,12 @@ void loki_printusage(char *argv0, const char *help_text)
     int len;
     int spacing = 0;
     int i;
+
+    /* Use the basename of argv[0] in the usage message */
+    if ( strrchr(argv0, '/') ) {
+        argv0 = strrchr(argv0, '/')+1;
+    }
+
     printf("Linux version by Loki Entertainment Software\n");
     printf("http://www.lokigames.com/\n");
     if ( loki_demo ) {
@@ -361,6 +337,26 @@ void loki_printusage(char *argv0, const char *help_text)
     if(help_text)
       printf("%s", help_text);
     putchar('\n');
+}
+
+void loki_register_stdoptions(void)
+{
+    /* Don't do anything if there are options already registered */
+    if ( nb_options > 0 ) {
+        return;
+    }
+
+    /* Register the standard set of Loki command line options */
+    loki_registeroption("help",         'h', "Display this help message");
+    loki_registeroption("version",      'v', "Display the game version");
+    loki_registeroption("fullscreen",   'f', "Run the game fullscreen");
+    loki_registeroption("windowed",     'w', "Run the game in a window");
+    loki_registeroption("nosound",      's', "Do not access the soundcard");
+    if ( ! loki_demo ) {
+        loki_registeroption("nocdrom",  'c', "Do not access the CD-ROM");
+        loki_registeroption("update",   'u', "Run the Loki auto-update tool");
+        loki_registeroption("qagent",   'q', "Run the Loki QAgent support tool");
+    }
 }
 
 /* This registers a new command-line option switch */
