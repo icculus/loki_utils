@@ -179,7 +179,7 @@ ini_file_t *loki_openinifile_internal(const char *path, int userreg)
     if( ! fd ) {
         free(ini);
         /* Create the file if necessary */
-        if ( access(path, F_OK) < 0 ) {
+        if ( access(path, F_OK) < 0  &&  ! userreg ) {
             return loki_createinifile(path);
         }
         return NULL;
@@ -296,20 +296,20 @@ ini_file_t *loki_openinifile_internal(const char *path, int userreg)
     /* End of file reached, check for unfinished stuff */
     switch(st) {
     case _value:
-      *ptr = '\0';
-      trim_spaces(buf);
-      l->value = strdup(buf);
-      break;
+		*ptr = '\0';
+		trim_spaces(buf);
+		l->value = strdup(buf);
+		break;
     case _comment:
-      *ptr = '\0';
-      if ( ! l ) {
-        l = add_new_line(s);
-      }
-      l->comment = strdup(buf);
-      break;
+		*ptr = '\0';
+		if ( ! l ) {
+			l = add_new_line(s);
+		}
+		l->comment = strdup(buf);
+		break;
     case _section:
-      fprintf(stderr,"Parse error in %s: end of file reached while in section name.\n", path);
-      break;
+		fprintf(stderr,"Parse error in %s: end of file reached while in section name.\n", path);
+		break;
     default:
     }
 
