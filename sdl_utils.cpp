@@ -623,20 +623,20 @@ void sdl_AllowResize(void)
 
 int sdl_DisplayImage(const char *filename, SDL_Surface *screen)
 {
-  SDL_Surface *file = SDL_LoadBMP(filename);
+	SDL_Surface *file = SDL_LoadBMP(filename);
   
-  if(file){
-    SDL_Rect dst = {0,0, file->w, file->h};
+	if(file){
+		SDL_Rect dst = {0,0, file->w, file->h};
+		
+		dst.x = (screen->w - file->w) / 2;
+		dst.y = (screen->h - file->h) / 2;
 
-    dst.x = (screen->w - file->w) / 2;
-    dst.y = (screen->h - file->h) / 2;
-
-    SDL_BlitSurface(file, NULL, screen, &dst);
-    SDL_UpdateRects(screen, 1, &dst);
-    SDL_FreeSurface(file);
-    return 1;
-  }
-  return 0;
+		SDL_BlitSurface(file, NULL, screen, &dst);
+		SDL_UpdateRects(screen, 1, &dst);
+		SDL_FreeSurface(file);
+		return 1;
+	}
+	return 0;
 }
 
 #ifdef __cplusplus
