@@ -4,11 +4,17 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdarg.h>
+#include <string.h>
 
 #include <SDL/SDL.h>
 #include <SDL/SDL_syswm.h>
 #include "loki_utils.h"
 #include "sdl_utils.h"
+
+#include "loki_glmessage.h"
+#include "loki_2dmessage.h"
+
 #ifdef unix
 #include <X11/Xutil.h>
 #endif
@@ -16,6 +22,101 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+static inline void sdl_showmsg_print(float, float, float, const char *);
+
+
+static inline void sdl_showmsg_initialize(float bgr, float bgg,
+                                          float bgb, float bga)
+{
+    if (SDL_GetVideoSurface()->flags & SDL_OPENGL)
+        loki_glmsg_initialize(bgr, bgg, bgb, bga);
+    else
+        loki_2dmsg_initialize(bgr, bgg, bgb, bga);
+}
+
+static inline void sdl_showmsg_splitprint(GLfloat r, GLfloat g, GLfloat b,
+                                            const char *str)
+{
+    SDL_Surface *surface = SDL_GetVideoSurface();
+    int chars_per_line = (surface->w / 10) - 2;   // minus two for spacing.
+    int len = strlen(str);
+    char buffer[len + 1];
+    int i;
+
+    for (i = 0; i < len; i += chars_per_line)
+    {
+        strcpy(buffer, str + i);
+        buffer[chars_per_line] = '\0';
+        sdl_showmsg_print(r, g, b, buffer);
+    } // for
+}
+
+static inline void sdl_showmsg_print(float r, float g, float b, const char *str)
+{
+    SDL_Surface *surface = SDL_GetVideoSurface();
+    int textw = ((int) surface->w - ((int) (strlen(str) * 10))) / 2;
+
+    if (textw < 0)
+    {
+        sdl_showmsg_splitprint(r, g, b, str);
+        return;
+    } // if
+
+    if (SDL_GetVideoSurface()->flags & SDL_OPENGL)
+        loki_glmsg_print(r, g, b, str);
+    else
+        loki_2dmsg_print(r, g, b, str);
+}
+
+//----------------------
+
+
+
+void sdl_ShowMessage(const char *fmt, ...)
+{
+    char buffer[1024];
+    int totallines = 0;
+    char *nextnl = buffer;
+    char *str = buffer;
+    int screenlines = (SDL_GetVideoSurface()->h / 15);      // 15 pixels/line
+    int screenwidth = (SDL_GetVideoSurface()->h / 10) - 2;  // -2 for spacing
+    va_list ap;
+
+    va_start(ap, fmt);
+    vsnprintf(buffer, sizeof (buffer), fmt, ap);
+    va_end(ap);
+
+    sdl_showmsg_initialize(0.0, 0.0, 0.0, 0.0);
+
+    do
+    {
+        nextnl = strchr(str, '\n');
+        if (nextnl != NULL)
+        {
+            totallines += ( ((int) (nextnl - str)) / screenwidth ) + 1;
+            str = nextnl + 1;
+        } // if
+    } while (nextnl != NULL);
+
+    for (int i = (screenlines - totallines) / 2; i >= 0; i--)
+        sdl_showmsg_print(0.0, 0.0, 0.0, "");
+
+    // okay, message is centered vertically...write it out.
+
+    str = buffer;
+
+    do
+    {
+        nextnl = strchr(str, '\n');
+        if (nextnl != NULL)
+            *nextnl = '\0';
+        sdl_showmsg_print(1.0, 1.0, 1.0, str);
+        str = nextnl + 1;
+    } while (nextnl != NULL);
+}
+
+
 
 int sdl_GetScreenSize(int *width, int *height)
 {
