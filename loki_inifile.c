@@ -42,10 +42,10 @@ struct _loki_ini_file_t {
 	FILE *fd;
 	char path[PATH_MAX];
 	int changed; /* Boolean */
-	struct section *sections;
+	struct section *sections, *iterator;
 };
 
-struct _loki_ini_iterator_t {
+struct _loki_ini_line_t {
 	ini_file_t *ini;
 	struct line *current;
 };
@@ -117,10 +117,33 @@ static void trim_spaces(char *str)
 	}
 }
 
+/* Create a new INI file from scratch */
+ini_file_t * loki_createinifile(const char *path)
+{
+	ini_file_t *ini;
+
+	ini = malloc(sizeof(ini_file_t));
+
+	if( ! ini )
+		return NULL;
+
+	ini->sections = ini->iterator = NULL;
+	ini->changed = 0;
+	ini->fd = fopen(path, "wb");
+	if( ! ini->fd ) {
+		free(ini);
+		return NULL;
+	}
+	strncpy(ini->path, path, PATH_MAX);
+	add_new_section(ini);
+
+	return ini;
+}
+
 /* Open and loads the INI file, returns error code */
 ini_file_t *loki_openinifile(const char *path)
 {
-	char buf[1024], c, *ptr = NULL;
+	char buf[1024], c, prevc = '\0', *ptr = NULL;
 	enum status st = _start;
 	struct section *s = NULL;
 	struct line *l = NULL;
@@ -132,7 +155,7 @@ ini_file_t *loki_openinifile(const char *path)
 	if( ! ini )
 		return NULL;
 
-	ini->sections = NULL;
+	ini->sections = ini->iterator = NULL;
 	ini->changed = 0;
 	ini->fd = fopen(path, "rb");
 	if( ! ini->fd ) {
@@ -204,7 +227,8 @@ ini_file_t *loki_openinifile(const char *path)
 			}
 			break;
 		case _value:
-			if ( c == ';' || c == '#' ) {
+			/* A comment on the same line as a key=value line must be have a blank character before ; or # */
+			if ( isblank(prevc) && (c == ';' || c == '#') ) {
 				*ptr = '\0';
 				trim_spaces(buf);
 				l->value = strdup(buf);
@@ -243,6 +267,7 @@ ini_file_t *loki_openinifile(const char *path)
 			}
 			break;
 		}
+		prevc = c;
 	}
 	return ini;
 }
@@ -415,7 +440,7 @@ int loki_writeinifile(ini_file_t *ini, const char *path)
 				fputc(' ', fd);
 			}
 			if ( l->comment ) {
-				fprintf(fd, ";%s", l->comment);
+				fprintf(fd, " ;%s", l->comment);
 			}
 			fputc('\n', fd);
 		}
@@ -429,7 +454,7 @@ int loki_writeinifile(ini_file_t *ini, const char *path)
 /* Initialize the iterator to the beginning of the given section.
    Returns NULL if the section does not exist.
  */
-ini_iterator_t *loki_begininisection(ini_file_t *ini, const char *section)
+ini_line_t *loki_begin_iniline(ini_file_t *ini, const char *section)
 {
 	struct section *s;
 
@@ -439,7 +464,7 @@ ini_iterator_t *loki_begininisection(ini_file_t *ini, const char *section)
 
 	for ( s = ini->sections ; s ; s = s->next ) {
 		if ( s->name && ! strcasecmp(section, s->name) ) {
-			ini_iterator_t *ret = malloc(sizeof(ini_iterator_t));
+			ini_line_t *ret = malloc(sizeof(ini_line_t));
 			ret->ini = ini;
 			ret->current = s->lines;
 			while( ret->current && !ret->current->key ) {
@@ -455,7 +480,7 @@ ini_iterator_t *loki_begininisection(ini_file_t *ini, const char *section)
    'lkey' and 'lvalue' are the size of the buffers passed in argument to the function.
    Returns a positive value if everything was OK, or zero else.
  */
-int loki_getiniline(ini_iterator_t *iterator, const char **key, const char **value)
+int loki_get_iniline(ini_line_t *iterator, const char **key, const char **value)
 {
 	if ( ! iterator || ! iterator->current ) {
 		return 0;
@@ -468,7 +493,7 @@ int loki_getiniline(ini_iterator_t *iterator, const char **key, const char **val
 /* Iterator to the next line of the section.
    Returns zero when at the end of the section or an error occured.
  */
-int loki_nextiniline(ini_iterator_t *iterator)
+int loki_next_iniline(ini_line_t *iterator)
 {
 	if ( ! iterator || ! iterator->current ) {
 		return 0;
@@ -487,7 +512,34 @@ int loki_nextiniline(ini_iterator_t *iterator)
 /* Free the iterator object allocated by loki_begininisection.
    Must be called when the user is done with the iterator.
  */
-void loki_freeiniiterator(ini_iterator_t *iterator)
+void loki_free_iniline(ini_line_t *iterator)
 {
 	free(iterator);
+}
+
+/* Returns the name of the fist section of the given file (initializes an internal iterator) */
+const char *loki_begin_inisection(ini_file_t *ini)
+{
+	/* Skip the first pseudo-section */
+	ini->iterator = ini->sections->next;
+	if ( ini->iterator ) {
+		return ini->iterator->name;
+	} else {
+		return NULL;
+	}
+}
+
+/* Returns the name of the next section of the given file, or NULL if no more sections */
+const char *loki_next_inisection(ini_file_t *ini)
+{
+	if ( ini->iterator ) {
+		ini->iterator = ini->iterator->next;
+		if ( ini->iterator ) {
+			return ini->iterator->name;
+		} else {
+			return NULL;
+		}
+	} else {
+		return NULL;
+	}
 }

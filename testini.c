@@ -5,7 +5,7 @@
 int main(int argc, char **argv)
 {
 	ini_file_t *ini;
-	ini_iterator_t *it;
+	ini_line_t *it;
 	char buf[256], command = '\0', key[100], section[100];
 	const char *ptr;
 
@@ -21,6 +21,7 @@ int main(int argc, char **argv)
 				   "g - Get a value from the file\n"
 				   "a - Add a new keyed value\n"
 				   "p - Print all lines of a given section\n"
+				   "i - Iterate through the sections\n"
 				   "q - Quit and write the file to test.ini\n\n"
 				   "Your choice ? "
 				   );
@@ -54,17 +55,24 @@ int main(int argc, char **argv)
 			case 'p':
 				printf("Section ? ");
 				scanf("%s", section);
-				it = loki_begininisection(ini, section);
+				it = loki_begin_iniline(ini, section);
 				if( it ) {
 					do {
 						const char *k, *v;
-						if ( loki_getiniline(it, &k, &v)) {
+						if ( loki_get_iniline(it, &k, &v)) {
 							printf("%s = %s\n", k, v);
 						}
-					} while( loki_nextiniline(it));
-					loki_freeiniiterator(it);
+					} while( loki_next_iniline(it));
+					loki_free_iniline(it);
 				} else 
 					printf("Section not found in file!\n");
+				break;
+			case 'i':
+				ptr = loki_begin_inisection(ini);
+				while ( ptr ) {
+					printf("[%s]\n", ptr);
+					ptr = loki_next_inisection(ini);
+				}
 				break;
 			case 'q':
 				break;
