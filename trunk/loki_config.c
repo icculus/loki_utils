@@ -294,7 +294,7 @@ void loki_printusage(char *argv0, const char *help_text)
                );
     }
     printf("\n");
-    printf("Usage: %s [options]\n", argv0);
+    printf("Usage: %s [options]\n", loki_getgamename());
 
         /* Add spacing so comments are aligned. ("\t" was not enough.) */
     for(i = 0; i<nb_options; i++)
