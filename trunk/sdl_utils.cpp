@@ -6,10 +6,10 @@
 
 #include <SDL/SDL.h>
 #include <SDL/SDL_syswm.h>
+#include "sdl_utils.h"
 #ifdef unix
 #include <X11/Xutil.h>
 #endif
-#include "sdl_utils.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,7 +22,7 @@ int sdl_GetScreenSize(int *width, int *height)
 
     retval = 0;
     SDL_VERSION(&info.version);
-    if ( SDL_GetWMInfo(&info) ) {
+    if ( SDL_GetWMInfo(&info) > 0 ) {
 #ifdef unix
         if ( info.subsystem == SDL_SYSWM_X11 ) {
             info.info.x11.lock_func();
@@ -47,7 +47,7 @@ int sdl_GetWindowSize(int *width, int *height)
 
     retval = 0;
     SDL_VERSION(&info.version);
-    if ( SDL_GetWMInfo(&info) ) {
+    if ( SDL_GetWMInfo(&info) > 0 ) {
 #ifdef unix
         if ( info.subsystem == SDL_SYSWM_X11 ) {
             Window u1; int u2; unsigned int u3;
@@ -79,7 +79,7 @@ int sdl_GetWindowPosition(int *x, int *y)
 
     retval = 0;
     SDL_VERSION(&info.version);
-    if ( SDL_GetWMInfo(&info) ) {
+    if ( SDL_GetWMInfo(&info) > 0 ) {
 #ifdef unix
         if ( info.subsystem == SDL_SYSWM_X11 ) {
             Display *display;
@@ -90,6 +90,7 @@ int sdl_GetWindowPosition(int *x, int *y)
             display = info.info.x11.display;
             window = info.info.x11.window;
 
+            XSync(display, False);
             XGetWindowAttributes(display, window, &attributes);
             XTranslateCoordinates (display, window, attributes.root, 
                                    -attributes.border_width,
@@ -120,7 +121,7 @@ void sdl_RemoveTitleBar(void)
     SDL_SysWMinfo info;
 
     SDL_VERSION(&info.version);
-    if ( SDL_GetWMInfo(&info) ) {
+    if ( SDL_GetWMInfo(&info) > 0 ) {
 #ifdef unix
         if ( info.subsystem == SDL_SYSWM_X11 ) {
             Atom WM_HINTS;
@@ -192,7 +193,7 @@ void sdl_RestoreTitleBar(void)
       return;
 
     SDL_VERSION(&info.version);
-    if ( SDL_GetWMInfo(&info) ) {
+    if ( SDL_GetWMInfo(&info) > 0 ) {
         if ( info.subsystem == SDL_SYSWM_X11 ) {
             Atom WM_HINTS;
             Display *display;
@@ -281,7 +282,7 @@ void sdl_InitClipboard(void)
 
     /* See if we can use our X11 code on this driver */
     SDL_VERSION(&info.version);
-    if ( SDL_GetWMInfo(&info) ) {
+    if ( SDL_GetWMInfo(&info) > 0 ) {
         if ( info.subsystem == SDL_SYSWM_X11 ) {
             /* Enable the special window hook events */
             SDL_EventState(SDL_SYSWMEVENT, SDL_ENABLE);
@@ -301,7 +302,7 @@ void sdl_PutClipboard(const char *text)
 
     /* Try to put the text selection into the X server */
     SDL_VERSION(&info.version);
-    if ( SDL_GetWMInfo(&info) ) {
+    if ( SDL_GetWMInfo(&info) > 0 ) {
         if ( info.subsystem == SDL_SYSWM_X11 ) {
             Display *display;
             Window window;
@@ -326,7 +327,7 @@ const char *sdl_GetClipboard(void)
 
     /* Try to get a text selection from the X server */
     SDL_VERSION(&info.version);
-    if ( SDL_GetWMInfo(&info) ) {
+    if ( SDL_GetWMInfo(&info) > 0 ) {
         if ( info.subsystem == SDL_SYSWM_X11 ) {
             Display *display;
             Window window;
@@ -395,7 +396,7 @@ void sdl_RemapWindow(void)
     SDL_SysWMinfo info;
 
     SDL_VERSION(&info.version);
-    if ( SDL_GetWMInfo(&info) ) {
+    if ( SDL_GetWMInfo(&info) > 0 ) {
         if ( info.subsystem == SDL_SYSWM_X11 ) {
             Display *display;
             Window window;
@@ -422,7 +423,7 @@ void sdl_GetAbsoluteMouseCoords(int *x, int *y)
     SDL_SysWMinfo info;
 
     SDL_VERSION(&info.version);
-    if ( SDL_GetWMInfo(&info) ) {
+    if ( SDL_GetWMInfo(&info) > 0 ) {
         if ( info.subsystem == SDL_SYSWM_X11 ) {
             Display *display;
             Window window, uncle, fucker;
@@ -474,39 +475,38 @@ void sdl_ConfineMouse(int on, int update)
     }
 
     SDL_VERSION(&info.version);
-    if ( SDL_GetWMInfo(&info) ) {
+    if ( SDL_GetWMInfo(&info) > 0 ) {
 #ifdef unix
         if ( info.subsystem == SDL_SYSWM_X11 ) {
             Display *display;
             Window window;
-
+            
             info.info.x11.lock_func();
             display = info.info.x11.display;
             window = info.info.x11.window;
             if ( on ) {
-			    int numTries, grabResult;
+                int numTries, grabResult;
                 /* The sync is required so the window is available */
                 XSync(display, False);
-				/* Grab the input focus so that the cursor is moved to the window */
-				XSetInputFocus(display, window, RevertToNone, CurrentTime);
-				for (numTries = 0; numTries < 10; numTries++) {
-				  grabResult = XGrabPointer(display, window,
-											True, ButtonPressMask|ButtonReleaseMask|ButtonMotionMask
-											|PointerMotionMask, GrabModeAsync, GrabModeAsync, window,
-											None, CurrentTime);
-				  if (grabResult != AlreadyGrabbed) {
-					break;
-				  }
-				  SDL_Delay(100);
-				}
-				if(grabsKeyboard){
-				  grabResult = XGrabKeyboard(display, window,
-											 False, GrabModeAsync, GrabModeAsync, CurrentTime);
-				  if (grabResult != 0) {
-					XUngrabPointer(display, CurrentTime);
-				  }
-				}
-
+                /* Grab the input focus so that the cursor is moved to the window */
+                XSetInputFocus(display, window, RevertToNone, CurrentTime);
+                for (numTries = 0; numTries < 10; numTries++) {
+                    grabResult = XGrabPointer(display, window,
+                                              True, ButtonPressMask|ButtonReleaseMask|ButtonMotionMask
+                                              |PointerMotionMask, GrabModeAsync, GrabModeAsync, window,
+                                              None, CurrentTime);
+                    if (grabResult != AlreadyGrabbed) {
+                        break;
+                    }
+                    SDL_Delay(100);
+                }
+                if(grabsKeyboard){
+                    grabResult = XGrabKeyboard(display, window,
+                                               False, GrabModeAsync, GrabModeAsync, CurrentTime);
+                    if (grabResult != 0) {
+                        XUngrabPointer(display, CurrentTime);
+                    }
+                }
             } else {
                 XUngrabPointer(display, CurrentTime);
                 XUngrabKeyboard(display, CurrentTime);
@@ -526,7 +526,7 @@ void sdl_GetInputFocus(void)
     SDL_SysWMinfo info;
 
     SDL_VERSION(&info.version);
-    if ( SDL_GetWMInfo(&info) ) {
+    if ( SDL_GetWMInfo(&info) > 0 ) {
 #ifdef unix
         if ( info.subsystem == SDL_SYSWM_X11 ) {
             Display *display;
@@ -548,12 +548,20 @@ void sdl_GetInputFocus(void)
 /* Once the window is iconified, it doesn't get input until the window
    manager brings it back, so sdl_IconifyWindow(0) is nearly useless.
 */
-void sdl_IconifyWindow(int on)
+int sdl_IconifyWindow(int on)
 {
     SDL_SysWMinfo info;
+    SDL_Surface *sdl_screen;
+    int retval = 0;
+
+    /* See if the display is in fullscreen mode */
+    sdl_screen = SDL_GetVideoSurface();
+    if ( !sdl_screen || (sdl_screen->flags & SDL_FULLSCREEN) ) {
+        return retval;
+    }
 
     SDL_VERSION(&info.version);
-    if ( SDL_GetWMInfo(&info) ) {
+    if ( SDL_GetWMInfo(&info) > 0 ) {
 #ifdef unix
         if ( info.subsystem == SDL_SYSWM_X11 ) {
             Display *display;
@@ -576,13 +584,14 @@ void sdl_IconifyWindow(int on)
                  */
                 XMapWindow(display, window);
             }
-
+            retval = 1;
             info.info.x11.unlock_func();
         }
 #else
 #error Need to implement these functions for other systems
 #endif // unix
     }
+    return retval;
 }
 
 void sdl_AllowResize(void)
@@ -590,7 +599,7 @@ void sdl_AllowResize(void)
     SDL_SysWMinfo info;
 
     SDL_VERSION(&info.version);
-    if ( SDL_GetWMInfo(&info) ) {
+    if ( SDL_GetWMInfo(&info) > 0 ) {
 #ifdef unix
         if ( info.subsystem == SDL_SYSWM_X11 ) {
             Display *display;
@@ -620,20 +629,20 @@ void sdl_AllowResize(void)
 
 int sdl_DisplayImage(const char *filename, SDL_Surface *screen)
 {
-	SDL_Surface *file = SDL_LoadBMP(filename);
+    SDL_Surface *file = SDL_LoadBMP(filename);
   
-	if(file){
-		SDL_Rect dst = {0,0, file->w, file->h};
-		
-		dst.x = (screen->w - file->w) / 2;
-		dst.y = (screen->h - file->h) / 2;
+    if(file){
+        SDL_Rect dst = {0,0, file->w, file->h};
+        
+        dst.x = (screen->w - file->w) / 2;
+        dst.y = (screen->h - file->h) / 2;
 
-		SDL_BlitSurface(file, NULL, screen, &dst);
-		SDL_UpdateRects(screen, 1, &dst);
-		SDL_FreeSurface(file);
-		return 1;
-	}
-	return 0;
+        SDL_BlitSurface(file, NULL, screen, &dst);
+        SDL_UpdateRects(screen, 1, &dst);
+        SDL_FreeSurface(file);
+        return 1;
+    }
+    return 0;
 }
 
 #ifdef __cplusplus
