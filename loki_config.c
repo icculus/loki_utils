@@ -55,7 +55,7 @@ static struct option long_options[MAX_OPTIONS+1] =
 #endif
   { "nosound",     0, 0, 's' },
   { "nocdrom",     0, 0, 'c' },
-  { "qagent",      0, 0,  1  },
+  { "qagent",      0, 0, 'q' },
   { NULL,          0, 0,  0  }
 };
 static int optional[MAX_OPTIONS+1] = { 0 };
