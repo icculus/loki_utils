@@ -112,10 +112,15 @@ static void catch_signal(int sig)
             fprintf(stderr, "Please send a full bug report,\n"
                     "along with the contents of autosave to: "BUGS_EMAIL"\n");
 
+#if 0 // bk991008 - kills Gnome, see above
             // Now kill any outstanding threads (network, etc.)
             do {
                 kill(0, SIGKILL);
             } while ( 1 );
+#else
+	_exit(-1);
+#endif //bk991008
+
             // Not reached -- we died just now.
         default:
             fprintf(stderr, "Unknown signal (%d) caught, cleaning up.\n", sig);
