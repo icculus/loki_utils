@@ -51,7 +51,7 @@ TARGET = libloki.a
 $(TARGET): $(OBJS)
 	$(AR) $(TARGET) $(OBJS)
 
-testini: testini.c
+testini: testini.c $(TARGET)
 	$(CC) $(CFLAGS) -o testini testini.c -L. -lloki
 
 clean:

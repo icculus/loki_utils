@@ -45,6 +45,11 @@ struct _loki_ini_file_t {
 	struct section *sections;
 };
 
+struct _loki_ini_iterator_t {
+	ini_file_t *ini;
+	struct line *current;
+};
+
 enum status { _start, _section, _key, _value, _before_comment, _comment };
 
 static void free_section(struct section *s);
@@ -405,4 +410,75 @@ int loki_writeinifile(ini_file_t *ini, const char *path)
 
 	ini->changed = 0; /* Mark as in sync with the data on disc */
 	return 1;
+}
+
+
+/* Initialize the iterator to the beginning of the given section.
+   Returns NULL if the section does not exist.
+ */
+ini_iterator_t *loki_begininisection(ini_file_t *ini, const char *section)
+{
+	struct section *s;
+
+	if ( ! ini ) {
+		return NULL;
+	}
+
+	for ( s = ini->sections ; s ; s = s->next ) {
+		if ( s->name && ! strcasecmp(section, s->name) ) {
+			ini_iterator_t *ret = malloc(sizeof(ini_iterator_t));
+			ret->ini = ini;
+			ret->current = s->lines;
+			while( ret->current && !ret->current->key ) {
+				ret->current = ret->current->next;
+			}
+			return ret;
+		}
+	}
+	return NULL;
+}
+
+/* Get the current key/value pair pointed to by the iterator.
+   'lkey' and 'lvalue' are the size of the buffers passed in argument to the function.
+   Returns a positive value if everything was OK, or zero else.
+ */
+int loki_getiniline(ini_iterator_t *iterator, char *key, int lkey, char *value, int lvalue)
+{
+	if ( ! iterator || ! iterator->current ) {
+		return 0;
+	}
+	strncpy(key, iterator->current->key, lkey);
+	if (iterator->current->value) {
+		strncpy(value, iterator->current->value, lvalue);
+	} else {
+		*value = '\0';
+	}
+	return 1;
+}
+
+/* Iterator to the next line of the section.
+   Returns zero when at the end of the section or an error occured.
+ */
+int loki_nextiniline(ini_iterator_t *iterator)
+{
+	if ( ! iterator || ! iterator->current ) {
+		return 0;
+	}
+	/* Skip the void lines */
+	do {
+		iterator->current = iterator->current->next;
+		if ( ! iterator->current ) {
+			return 0;
+		}
+	} while ( ! iterator->current->key );
+
+	return 1;
+}
+
+/* Free the iterator object allocated by loki_begininisection.
+   Must be called when the user is done with the iterator.
+ */
+void loki_freeiniiterator(ini_iterator_t *iterator)
+{
+	free(iterator);
 }
