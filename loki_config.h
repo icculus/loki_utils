@@ -35,6 +35,11 @@ extern "C" {
 */
 extern void loki_initconfig(void);
 
+/* This function tells the library that the game is (or isn't) a demo,
+   so it doesn't print out support information on usage screen.
+*/
+extern void loki_isdemo(int isdemo);
+
 /* Set the default value for config names if they are not found. */
 extern void loki_configdefault( const char* dflt );
 

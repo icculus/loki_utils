@@ -207,6 +207,11 @@ int loki_demo = 1;
 int loki_demo = 0;
 #endif
 
+void loki_isdemo(int value)
+{
+    loki_demo = value;
+}
+
 void loki_printusage(char *argv0, const char *help_text)
 {
     int len;
