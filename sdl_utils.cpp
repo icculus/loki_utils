@@ -26,10 +26,14 @@ int sdl_GetScreenSize(int *width, int *height)
 #ifdef unix
         if ( info.subsystem == SDL_SYSWM_X11 ) {
             info.info.x11.lock_func();
-            *width = DisplayWidth(info.info.x11.display,
+            if ( width ) {
+                *width = DisplayWidth(info.info.x11.display,
                             DefaultScreen(info.info.x11.display));
-            *height = DisplayHeight(info.info.x11.display,
+            }
+            if ( height ) {
+                *height = DisplayHeight(info.info.x11.display,
                             DefaultScreen(info.info.x11.display));
+            }
             info.info.x11.unlock_func();
             retval = 1;
         }
