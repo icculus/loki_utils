@@ -32,6 +32,9 @@ extern "C" {
 /* Set the name of the game - should be called before loki_initialize() */
 extern void loki_setgamename(const char *n);
 
+/* Get the game name - can be called anytime after loki_setgamename() */
+extern const char *loki_getgamename(void);
+
 /* This function parses command line arguments and initializes the
    utility functions that most Loki games use.
 */
