@@ -25,10 +25,8 @@
 
 static unsigned int root_cnt = 0;
 
-/* This function parses command line arguments and initializes the utility
-   functions that most Loki games use.
-*/
-void loki_initialize(int argc, char *argv[], const char *extra_help)
+/* This initializes the library without parsing the command-line arguments */
+void loki_initialize_noparse(int argc, char *argv[])
 {
     /* Make this semi-safe if we're set-uid root - not a security fix!! */
     loki_releaseroot();
@@ -41,6 +39,14 @@ void loki_initialize(int argc, char *argv[], const char *extra_help)
 
     /* Load default user configuration */
     loki_initconfig();
+}
+
+/* This function parses command line arguments and initializes the utility
+   functions that most Loki games use.
+*/
+void loki_initialize(int argc, char *argv[], const char *extra_help)
+{
+	loki_initialize_noparse(argc, argv);
 
     /* Handle command line parsing */
     loki_parseargs(argc, argv, extra_help);
