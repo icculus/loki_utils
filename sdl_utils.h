@@ -23,6 +23,11 @@ extern SDL_Surface *sdl_LoadPCX(const char *filename);
 /* Display a BMP image */
 extern int sdl_DisplayImage(const char *filename, SDL_Surface *screen);
 
+/* Save a snapshot of the screen in the user's game directory.
+   If 'screen' is NULL, then the main SDL screen surface is used.
+ */
+extern void sdl_SnapShot(SDL_Surface *screen);
+
 /*********************************************************************/
 /*  Old and obsolete functions                                       */
 /*********************************************************************/

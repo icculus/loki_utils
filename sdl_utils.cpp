@@ -3,9 +3,11 @@
 
 #include <limits.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <SDL/SDL.h>
 #include <SDL/SDL_syswm.h>
+#include "loki_utils.h"
 #include "sdl_utils.h"
 #ifdef unix
 #include <X11/Xutil.h>
@@ -334,6 +336,23 @@ int sdl_DisplayImage(const char *filename, SDL_Surface *screen)
     return 0;
 }
 
+void sdl_SnapShot(SDL_Surface *screen)
+{
+	char filename[100], path[PATH_MAX];
+	int count = 1;
+
+	if ( ! screen ) {
+		screen = SDL_GetVideoSurface();
+	}
+
+	if ( ! screen ) return;
+
+	do {
+		sprintf(filename,"%s_shot%d.bmp", loki_getgamename(), count++);
+	}while(!access(loki_getpreffile(filename, path, sizeof(path)), R_OK));
+
+	SDL_SaveBMP(screen, path);
+}
 
 /*********************************************************************/
 /*  Old and obsolete functions                                       */
