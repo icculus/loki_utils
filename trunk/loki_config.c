@@ -66,6 +66,28 @@ typedef struct config_element {
 
 static config_element *config_list = NULL;
 
+static char* config_default = NULL;
+
+void loki_configdefault( const char* dflt )
+{
+
+    if( config_default ) {
+	free( config_default );
+	config_default = NULL;
+    }
+
+    if( dflt ) {
+	int length = strlen( dflt );
+	config_default = (char*) malloc( length + 1 );
+
+	if( config_default ) {
+	    strncpy( config_default, dflt, length );
+	}
+
+    }
+
+}
+
 void loki_insertconfig(const char *key, const char *value)
 {
     config_element *pip, *last;
@@ -147,6 +169,9 @@ static void loki_parseconfig(const char *file)
 void loki_initconfig(void)
 {
     char *home;
+
+    /* Set initial value. */
+    loki_configdefault( "" );
 
     home = loki_gethomedir();
     if ( home != NULL ) {
@@ -250,7 +275,7 @@ void loki_parseargs(int argc, char *argv[], const char *extra_help)
 /* This function returns a default value from the configuration */
 static char *loki_getconfig_default(const char *key)
 {
-    return("");
+    return config_default;
 }
 
 /* This function returns a string value from the configuration */
@@ -279,13 +304,13 @@ int loki_getconfig_bool(const char *key)
     char *value;
 
     value = loki_getconfig_str(key);
-    if ( (atoi(value) > 0) ||
-         (strcasecmp(value, "true") == 0) ||
-         (strcasecmp(value, "yes") == 0) ) {
-        return(1);
+
+    if( value ) {
+	return 1;
     } else {
-        return(0);
+	return 0;
     }
+
 }
 
 /* This function returns an int value from the configuration */
@@ -294,7 +319,13 @@ int loki_getconfig_int(const char *key)
     char *value;
 
     value = loki_getconfig_str(key);
-    return(atoi(value));
+
+    if( value ) {
+	return atoi( value );
+    } else {
+	return 0;
+    }
+
 }
 
 /* This function returns a float value from the configuration */
@@ -303,6 +334,12 @@ double loki_getconfig_float(const char *key)
     char *value;
 
     value = loki_getconfig_str(key);
-    return(atof(value));
+
+    if( value ) {
+	return atof( value );
+    } else {
+	return 0.0;
+    }
+
 }
 
