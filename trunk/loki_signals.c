@@ -105,7 +105,7 @@ static void catch_signal(int sig)
                 fprintf(stderr, "Stack dump:\n");
                 fprintf(stderr, "{\n");
                 size = backtrace(array, (sizeof array)/(sizeof array[0]));
-#if (__GLIBC__ >= 2) || ((__GLIBC__ == 2) && (__GLIBC_MINOR__ >= 1))
+#if (__GLIBC__ > 2) || ((__GLIBC__ == 2) && (__GLIBC_MINOR__ >= 1))
 				syms = backtrace_symbols(array, size);
                 for ( i=0; i<size; ++i ) {
                     fprintf(stderr, "\t%s\n", syms[i]);
