@@ -435,6 +435,12 @@ void sdl_GetAbsoluteMouseCoords(int *x, int *y)
 }
 
 static int isMouseConfined = 0;
+static int grabsKeyboard = 0;
+
+void sdl_ConfineGrabsKeyboard(int flag)
+{
+   grabsKeyboard = flag;
+}
 
 int sdl_IsMouseConfined(void)
 {
@@ -470,38 +476,33 @@ void sdl_ConfineMouse(int on, int update)
             display = info.info.x11.display;
             window = info.info.x11.window;
             if ( on ) {
+			    int numTries, grabResult;
                 /* The sync is required so the window is available */
                 XSync(display, False);
-                XGrabPointer(display, window, True, 0, GrabModeAsync,
-                             GrabModeAsync, window, None, CurrentTime);
+				for (numTries = 0; numTries < 10; numTries++) {
+				  grabResult = XGrabPointer(display, window,
+											True, ButtonPressMask|ButtonReleaseMask|ButtonMotionMask
+											|PointerMotionMask, GrabModeAsync, GrabModeAsync, window,
+											None, CurrentTime);
+				  if (grabResult != AlreadyGrabbed) {
+					break;
+				  }
+				  SDL_Delay(100);
+				}
+				if(grabsKeyboard){
+				  grabResult = XGrabKeyboard(display, window,
+											 False, GrabModeAsync, GrabModeAsync, CurrentTime);
+				  if (grabResult != 0) {
+					XUngrabPointer(display, CurrentTime);
+				  }
+				}
+
             } else {
                 XUngrabPointer(display, CurrentTime);
+                XUngrabKeyboard(display, CurrentTime);
             }
             if(update)
               isMouseConfined = on;
-            info.info.x11.unlock_func();
-        }
-#else
-#error Need to implement these functions for other systems
-#endif // unix
-    }
-}
-
-void sdl_AutoRaise(void)
-{
-    SDL_SysWMinfo info;
-
-    SDL_VERSION(&info.version);
-    if ( SDL_GetWMInfo(&info) ) {
-#ifdef unix
-        if ( info.subsystem == SDL_SYSWM_X11 ) {
-            Display *display;
-            Window window;
-
-            info.info.x11.lock_func();
-            display = info.info.x11.display;
-            window = info.info.x11.window;
-            XSetInputFocus(display, window, RevertToPointerRoot, CurrentTime);
             info.info.x11.unlock_func();
         }
 #else
