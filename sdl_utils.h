@@ -18,6 +18,7 @@ extern void sdl_PutClipboard(const char *text);
 extern int sdl_ClipboardFilter(const SDL_Event *event);
 extern const char *sdl_GetClipboard(void);
 extern int sdl_IsMouseConfined(void);
+extern void sdl_ConfineGrabsKeyboard(int flag);
 extern void sdl_ConfineMouse(int on, int update);
 extern void sdl_ToggleConfineMouse(void);
 extern void sdl_IconifyWindow(int on);
