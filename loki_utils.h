@@ -54,6 +54,11 @@ extern void loki_initsignals(void);
 */
 extern void loki_signalcleanup(void (*cleanup)(void));
 
+/* This function runs the Loki support agent and never returns.
+   If you have a stack trace file, pass the pathname to this function.
+*/
+extern void loki_runqagent(const char *stack_trace_file);
+
 /* This function simulates a debugger breakpoint (crashes if not in GDB!) */
 #ifndef NDEBUG
 #ifdef __i386

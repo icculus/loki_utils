@@ -37,9 +37,9 @@
 
 /* How many builtin options ? */
 #ifndef WINDOWED_ONLY
-#define COMMON_OPTIONS 6
+#define COMMON_OPTIONS 7
 #else
-#define COMMON_OPTIONS 4
+#define COMMON_OPTIONS 5
 #endif
 
 /* This is a list of general configuration parameters in userprofile.txt
@@ -55,6 +55,7 @@ static struct option long_options[MAX_OPTIONS+1] =
 #endif
   { "nosound",     0, 0, 's' },
   { "nocdrom",     0, 0, 'c' },
+  { "qagent",      0, 0, 'q' },
   { NULL,          0, 0,  0  }
 };
 static int optional[MAX_OPTIONS+1] = { 0 };
@@ -69,6 +70,7 @@ static const char *option_comment[MAX_OPTIONS] =
 #endif
     "Do not access the soundcard",
     "Do not access the CD-ROM",
+    "Run the Loki QAgent support tool",
     NULL,
 };
 
@@ -107,7 +109,6 @@ void loki_configdefault( const char* dflt )
         }
         
     }
-    
 }
 
 void loki_insertconfig(const char *key, const char *value)
@@ -388,6 +389,9 @@ void loki_parseargs(int argc, char *argv[], const char *extra_help)
             case 'v':
                 printf("%s", game_version);
                 printf("Built with glibc-%d.%d\n", __GLIBC__, __GLIBC_MINOR__);
+                exit(0);
+            case 'q':
+                loki_runqagent(NULL);
                 exit(0);
             case 'h':
                 loki_printusage(argv[0], extra_help);
