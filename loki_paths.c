@@ -316,7 +316,7 @@ size_t loki_getavailablespace(const char *path)
     struct statfs buf;
     if(statfs(path,&buf))
         return 0;
-    return (buf.f_bsize * buf.f_bavail) / 1024;
+    return ((long long)buf.f_bsize * buf.f_bavail) / 1024;
 }
 
 /* Code to determine the mount point of a CD-ROM */
