@@ -212,8 +212,13 @@ void loki_initpaths(char *argv0)
 
     strcpy(env, game_name);
 
-    for(ptr = env; *ptr; ptr++)
-      *ptr = toupper(*ptr);
+    ptr = env;
+    while (*ptr) {
+	/* Fix illegal environment variable names for game-beta */
+	if (*ptr = '-') *ptr = '_';
+	else *ptr = toupper (*ptr);
+	ptr++;
+    }
     strcat(env,"_DATA");
 
     data_env = getenv(env);
