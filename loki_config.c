@@ -210,7 +210,7 @@ void loki_printusage(char *argv0, const char *help_text)
 #ifdef LINUX_DEMO
     printf("Support - Full versions of our games have technical support\n");
 #elif !defined(LINUX_BETA)
-    printf("Support - Phone:  1-801-356-7629 (9-5 PM US Mountain Time)\n");
+    printf("Support - Phone:  1-714-508-2140 (9-5 PM US Pacific Time)\n");
     printf("          E-mail: support@lokigames.com\n");
 #endif
     printf("\n");
