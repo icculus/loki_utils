@@ -44,11 +44,11 @@ static struct option long_options[MAX_OPTIONS+1] =
 {
   { "help",        0, 0, 'h' },
   { "version",     0, 0, 'v' },
-  { "fullscreen",  0, 0, 'f' },
 #ifndef WINDOWED_ONLY
+  { "fullscreen",  0, 0, 'f' },
   { "windowed",    0, 0, 'w' },
-  { "nosound",     0, 0, 's' },
 #endif
+  { "nosound",     0, 0, 's' },
   { "nocdrom",     0, 0, 'c' },
   { NULL,          0, 0,  0  }
 };
