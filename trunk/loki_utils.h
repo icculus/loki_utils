@@ -37,6 +37,13 @@ extern void loki_initialize(int argc, char *argv[], const char *extra_help);
 /* This function initializes crash signal handlers */
 extern void loki_initsignals(void);
 
+/* This function simulates a debugger breakpoint (crashes if not in GDB!) */
+#ifndef NDEBUG
+extern void loki_breakdebugger(void);
+#else
+#define loki_breakdebugger()
+#endif
+
 /* These functions are used to bracket sections of code that may need root privileges */
 extern void loki_acquireroot(void);
 extern void loki_releaseroot(void);
