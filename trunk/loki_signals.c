@@ -166,8 +166,9 @@ void loki_signalcleanup(void (*cleanup)(void))
     signal_cleanup = cleanup;
 }
 
+#ifndef __i386
 void loki_breakdebugger(void)
 {
-    /* Force GDB to stop by sending a TRAP signal to the current process */
-    kill(getpid(), SIGTRAP);
+	raise(SIGTRAP);
 }
+#endif
