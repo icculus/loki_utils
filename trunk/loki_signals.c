@@ -140,6 +140,8 @@ static void catch_signal(int sig)
 void loki_initsignals(void)
 {
     // Add signal handlers
+    signal(SIGHUP, catch_signal);
+    signal(SIGQUIT, catch_signal);
     signal(SIGABRT, catch_signal);
     signal(SIGSEGV, catch_signal);
 }
