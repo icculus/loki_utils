@@ -178,8 +178,9 @@ void loki_printusage(char *argv0, const char *help_text)
     printf("\t[-c | --nocdrom]\tDo not access the CD-ROM\n");
 	for(i = COMMON_OPTIONS; i<nb_options; i++)
 	  printf("\t[-%c | --%s]\t%s\n", long_options[i].val, long_options[i].name, option_comment[i-COMMON_OPTIONS]);
-    printf("%s", help_text);
-    printf("\n");
+	if(help_text)
+	  printf("%s", help_text);
+    putchar('\n');
 }
 
 /* This registers a new command-line option switch */
