@@ -1,7 +1,7 @@
 #ifndef __SDLUTILS_H__
 #define __SDLUTILS_H__
 
-#include "SDL.h"
+#include <SDL/SDL.h>
 
 #ifdef __cplusplus
 extern "C" {
