@@ -215,7 +215,7 @@ void loki_initpaths(char *argv0)
     ptr = env;
     while (*ptr) {
 	/* Fix illegal environment variable names for game-beta */
-	if (*ptr = '-') *ptr = '_';
+	if (*ptr == '-') *ptr = '_';
 	else *ptr = toupper (*ptr);
 	ptr++;
     }
