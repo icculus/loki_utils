@@ -302,6 +302,7 @@ char *loki_getconfig_str(const char *key)
 int loki_getconfig_bool(const char *key)
 {
     char *value;
+    int retval = 0;
 
     value = loki_getconfig_str(key);
 
@@ -315,19 +316,24 @@ int loki_getconfig_bool(const char *key)
     if( value ) {
 
 	if( !strcasecmp( value, "false" ) ) {
-	    return 0;
+	    retval = 0;
 	} else if( !strcasecmp( value, "no" ) ) {
-	    return 0;
+	    retval = 0;
+	} else if( !strcasecmp( value, "off" ) ) {
+	    retval = 0;
+	} else if( !strcasecmp( value, "0" ) ) {
+	    retval = 0;
 	} else if ( !strcasecmp( value, "" ) ) {
-	    return 0;
+	    retval = 0;
 	} else {
-	    return 1;
+	    retval = 1;
 	}
 
     } else {
-	return 0;
+	retval = 0;
     }
 
+    return retval;
 }
 
 /* This function returns an int value from the configuration */
