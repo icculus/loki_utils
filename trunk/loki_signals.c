@@ -58,10 +58,16 @@ static void catch_signal(int sig)
             fprintf(stderr, "Caught signal in cleanup -- aborting\n");
             break;
         }
+#if 0
         // Kill all threads with no chance of surviving.
+	// This kills the X session when run from the GNOME panel
+	// since the X session is in the same process group.
         do {
             kill(0, SIGKILL);
         } while ( 1 );
+#else
+	_exit(-1);
+#endif
         // Not reached -- we died just now.
     } else {
         cleaning_up = 1;
