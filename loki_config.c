@@ -113,6 +113,27 @@ void loki_configdefault( const char* dflt )
 void loki_insertconfig(const char *key, const char *value)
 {
     config_element *pip, *last;
+    static struct {
+        const char *option1;
+        const char *option2;
+    } exclusives[] = {
+        { "fullscreen", "windowed" }
+    };
+    int i;
+
+    /* Handle special exclusive options here
+       If one option is set, the other one is deleted
+     */
+    for ( i=0; i<(sizeof(exclusives)/sizeof(exclusives[0])); ++i ) {
+        if ( strcasecmp(key, exclusives[i].option1) == 0 ) {
+            loki_deleteconfig(exclusives[i].option2);
+            break;
+        }
+        if ( strcasecmp(key, exclusives[i].option2) == 0 ) {
+            loki_deleteconfig(exclusives[i].option1);
+            break;
+        }
+    }
 
     /* Search for an existing entry with this value */
     last = NULL;
@@ -148,6 +169,33 @@ void loki_insertconfig(const char *key, const char *value)
         } else {
             config_list = pip;
         }
+    }
+}
+
+void loki_deleteconfig(const char *key)
+{
+    config_element *pip, *last;
+
+    /* Search for an existing entry with this value */
+    last = NULL;
+    for ( pip=config_list; pip; last=pip, pip=pip->next ) {
+        if ( strcasecmp(key, pip->key) == 0 ) {
+            break;
+        }
+    }
+
+    /* Delete it if we found it */
+    if ( pip ) {
+        if ( last ) {
+            last->next = pip->next;
+        } else {
+            config_list = pip->next;
+        }
+        free(pip->key);
+        if ( pip->value ) {
+            free(pip->value);
+        }
+        free(pip);
     }
 }
 
