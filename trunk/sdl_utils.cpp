@@ -466,6 +466,11 @@ void sdl_ConfineMouse(int on, int update)
 {
     SDL_SysWMinfo info;
 
+    if(!sdl_screen){
+	// Watch out there, laddy.
+	return;
+    }
+
     if(!sdl_screen && update){
       isMouseConfined = on; // Only initialize the variable
       return;
