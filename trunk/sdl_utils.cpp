@@ -126,7 +126,6 @@ void sdl_RemoveTitleBar(void)
             Atom WM_HINTS;
             Display *display;
             Window window;
-            XSetWindowAttributes attributes;
 
             info.info.x11.lock_func();
             display = info.info.x11.display;
@@ -192,13 +191,13 @@ void sdl_RestoreTitleBar(void)
             Atom WM_HINTS;
             Display *display;
             Window window;
-            XSetWindowAttributes attributes;
 
             info.info.x11.lock_func();
             display = info.info.x11.display;
             window = info.info.x11.window;
 
             switch(wm_type){
+                case No_WM:
                 case GNOME_WM:
                 case Motif_WM:
                   WM_HINTS = XInternAtom(display, "_MOTIF_WM_HINTS", True);

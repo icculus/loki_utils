@@ -17,12 +17,17 @@ CFLAGS += -g
 else
 CFLAGS += -O2
 endif
+ifneq ($(sdl_utils), false)
 CFLAGS += -D_REENTRANT -D_SDL_STATIC_LIB -I../SDL/include
+endif
 
 CXXFLAGS = $(CFLAGS)
 .SUFFIXES: .c .cpp
 
-OBJS = loki_config.o loki_network.o loki_paths.o loki_signals.o loki_utils.o sdl_utils.o
+OBJS = loki_config.o loki_network.o loki_paths.o loki_signals.o loki_utils.o
+ifneq ($(sdl_utils), false)
+OBJS += sdl_utils.o
+endif
 
 TARGET = libloki.a
 
