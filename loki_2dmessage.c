@@ -46,16 +46,7 @@ int loki_2dmsg_initialize(float bgr, float bgg, float bgb, float bga)
 
     texty = 0;
 
-    if (SDL_MUSTLOCK(surface))
-        SDL_LockSurface(surface);
-
-        // !!! This is always color zero.
-    memset(surface->pixels, '\0', surface->h * surface->pitch);
-
-    if (SDL_MUSTLOCK(surface))
-        SDL_UnlockSurface(surface);
-
-    SDL_UpdateRect(surface, 0, 0, 0, 0);
+    SDL_FillRect(surface, NULL, SDL_MapRGB(surface->format, 0, 0, 0));
 
     return(0);
 }
@@ -63,8 +54,10 @@ int loki_2dmsg_initialize(float bgr, float bgg, float bgb, float bga)
 
 static inline void loki_2dmsg_internal_printChar(int x, int y,
                                                  SDL_Surface *surface,
-                                                 unsigned char ch)
+                                                 unsigned char ch,
+                                                 Uint32 color)
 {
+    int bpp;
     int i;
     int j;
     unsigned char *dest;
@@ -73,18 +66,31 @@ static inline void loki_2dmsg_internal_printChar(int x, int y,
     if (ch > 127)
         return;
 
+    bpp = surface->format->BytesPerPixel;
+
     src = loki_fontchars[ch];
 
-    for (i = 8; i >= 0; i--)
+    for (i = 7; i >= 0; i--)
     {
-        dest = surface->pixels +
-              ((surface->pitch * y) + (x + surface->format->BytesPerPixel));
+        dest = surface->pixels + ((surface->pitch * y) + (x * bpp));
 
-        for (j = 128; j >= 1; j >>= 1)
+        for (j = 128; j > 0; j >>= 1)
         {
-            if (src[i] & j)
-                memset(dest, 0xFF, surface->format->BytesPerPixel);  // ugh! !!!
-            dest += surface->format->BytesPerPixel;
+            if (src[i] & j) {
+                switch(bpp) {
+                    case 1:
+                        *(Uint8 *)dest = color;
+                        break;
+                    case 2:
+                        *(Uint16 *)dest = color;
+                        break;
+                    case 3:
+                    case 4:
+                        *(Uint32 *)dest = color;
+                        break;
+                }
+            }
+            dest += bpp;
         } // for
 
         y++;
@@ -93,13 +99,14 @@ static inline void loki_2dmsg_internal_printChar(int x, int y,
 
 static inline void loki_2dmsg_internal_printString(int x, int y,
                                                    SDL_Surface *surface,
-                                                   const char *str)
+                                                   const char *str,
+                                                   Uint32 color)
 {
     if (SDL_MUSTLOCK(surface))
         SDL_LockSurface(surface);
 
-    for (; *str != '\0'; str++, x += 15)
-        loki_2dmsg_internal_printChar(x, y, surface, *str);
+    for (; *str != '\0'; str++, x += 10)
+        loki_2dmsg_internal_printChar(x, y, surface, *str, color);
 
     if (SDL_MUSTLOCK(surface))
         SDL_UnlockSurface(surface);
@@ -111,14 +118,16 @@ static inline void loki_2dmsg_internal_printString(int x, int y,
 void loki_2dmsg_print(float r, float g, float b, const char *str)
 {
     SDL_Surface *surface = SDL_GetVideoSurface();
-    int textw = ((int) surface->w - ((int) (strlen(str) * 15))) / 2;
+    Uint32 color;
+    int textw = ((int) surface->w - ((int) (strlen(str) * 10))) / 2;
 
     #ifdef STANDALONE
         printf("loki_2dmsg_print(): Should write this to the frame buffer:\n"
                "\"%s\"\n", str);
     #endif
 
-    loki_2dmsg_internal_printString(textw, texty, surface, str);
+    color = SDL_MapRGB(surface->format, r*255.0, g*255.0, b*255.0);
+    loki_2dmsg_internal_printString(textw, texty, surface, str, color);
 
     texty += 15;
     if (texty <= 0)
