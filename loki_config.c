@@ -413,11 +413,15 @@ void loki_parseargs(int argc, char *argv[], const char *extra_help)
                 remaining_args = &argv[optind];
                 return;
             case 'u':
-                loki_runupdate(argc, argv);
-                exit(0);
+                if ( ! loki_demo ) {
+                    loki_runupdate(argc, argv);
+                }
+                break;
             case 'q':
-                loki_runqagent(NULL);
-                exit(0);
+                if ( ! loki_demo ) {
+                    loki_runqagent(NULL);
+                }
+                break;
             case 'v':
                 printf("%s\n", loki_getgamedescription());
                 printf("Built with glibc-%d.%d on %s\n",
