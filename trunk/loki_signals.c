@@ -63,6 +63,7 @@ static void print_crash(int log, const char *fmt, ...)
 // Try to clean up gracefully on a signal, and terminate us if we fail
 static void catch_signal(int sig)
 {
+    static int fatal_crash = 0;
     static int cleaning_up = 0;
     /* Don't malloc the path since heap may be corrupted */
     static char logfile[PATH_MAX] = { 0 };
@@ -103,12 +104,13 @@ static void catch_signal(int sig)
             print_crash(log, "Interrupt signal caught, cleaning up.\n");
             break;
         case SIGABRT:
-            print_crash(log, "BUG!  Assertion failed, cleaning up.\n");
+            print_crash(log, "BUG!  Exception triggered, cleaning up.\n");
             { extern char *game_version;
                 print_crash(log, "%s", game_version);
                 print_crash(log, "Built with glibc-%d.%d\n",
                         __GLIBC__, __GLIBC_MINOR__);
             }
+            fatal_crash = 1;
 #ifdef LINUX_BETA
             fprintf(stderr, "Please file a full bug report in Fenris,\n"
                     "at http://fenris.lokigames.com/\n");
@@ -149,6 +151,7 @@ static void catch_signal(int sig)
 #else
 #warning Stack dump disabled.
 #endif
+            fatal_crash = 1;
 
 #ifdef LINUX_BETA
             fprintf(stderr, "Please file a full bug report in Fenris,\n"
@@ -175,8 +178,15 @@ static void catch_signal(int sig)
         }
     }
 
-    /* Run the Loki support QAgent */
-    loki_runqagent(logfile);
+    /* Run the Loki support QAgent on fatal crashes (never returns) */
+    if ( fatal_crash ) {
+        loki_runqagent(logfile);
+    }
+    /* Not a fatal crash, but we may have crashed in signal cleanup */
+    if ( (sig == SIGABRT) || (sig == SIGSEGV) ) {
+        _exit(sig);
+    }
+    exit(sig);
 }
 
 void loki_initsignals(void)
