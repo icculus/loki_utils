@@ -63,13 +63,13 @@ static void catch_signal(int sig)
         }
 #if 0
         // Kill all threads with no chance of surviving.
-	// This kills the X session when run from the GNOME panel
-	// since the X session is in the same process group.
+    // This kills the X session when run from the GNOME panel
+    // since the X session is in the same process group.
         do {
             kill(0, SIGKILL);
         } while ( 1 );
 #else
-	_exit(-1);
+    _exit(-1);
 #endif
         // Not reached -- we died just now.
     } else {
@@ -94,7 +94,7 @@ static void catch_signal(int sig)
             break;
         case SIGSEGV:
             fprintf(stderr, "BUG! (Segmentation Fault)  Going down hard...\n");
-            { extern char *game_version;
+            { extern char game_version[];
                 fprintf(stderr, "%s", game_version);
                 fprintf(stderr, "Built with glibc-%d.%d\n",
                         __GLIBC__, __GLIBC_MINOR__);
@@ -150,15 +150,15 @@ void loki_initsignals(void)
    after a fatal signal is caught and handled.  If the application causes
    a fatal signal while this function is called, it calls _exit(-1);
    The cleanup function is prototyped:
-	void cleanup(void);
+    void cleanup(void);
 */
 void loki_signalcleanup(void (*cleanup)(void))
 {
-	signal_cleanup = cleanup;
+    signal_cleanup = cleanup;
 }
 
 void loki_breakdebugger(void)
 {
-	/* Force GDB to stop by sending a TRAP signal to the current process */
-	kill(getpid(), SIGTRAP);
+    /* Force GDB to stop by sending a TRAP signal to the current process */
+    kill(getpid(), SIGTRAP);
 }
