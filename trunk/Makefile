@@ -51,7 +51,7 @@ endif
 
 OBJS := $(CSRC:%.c=$(ARCH)/%.o) $(CPPSRC:%.cpp=$(ARCH)/%.o) 
 
-TARGET = $(ARCH)/libloki.a
+override TARGET = $(ARCH)/libloki.a
 
 $(ARCH)/%.o: %.c
 	$(CC) -o $@ $(CFLAGS) -c $<
