@@ -53,9 +53,16 @@ extern char *loki_getcdrompath(void);
 
 /* Returns the absolute path of a data file under datapath */
 extern char *loki_getdatafile(const char *file, char *filepath, int maxpath);
+/* The same for a preferences file */
+extern char *loki_getpreffile(const char *file, char *filepath, int maxpath);
+/* And to get a file from the CDROM, if its path has been set */
+extern char *loki_getcdromfile(const char *file, char *filepath, int maxpath);
 
 /* This function returns the home directory for the current user */
 extern char *loki_gethomedir(void);
+
+/* Returns the available disk space in kilobytes on the filesystem that contains "path" */
+extern size_t loki_getavailablespace(const char *path);
 
 /* This function determines the mount point for a CD-ROM device */
 extern int loki_getmountpoint(const char *device, char *mntpt, int max_size);

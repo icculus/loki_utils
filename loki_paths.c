@@ -21,6 +21,7 @@
 #include <sys/param.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/vfs.h>
 #include <pwd.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -207,6 +208,31 @@ char *loki_getdatafile(const char *file, char *filepath, int maxpath)
         strncat(filepath, file, maxpath);
     }
     return filepath;
+}
+
+char *loki_getpreffile(const char *file, char *filepath, int maxpath)
+{
+    strncpy(filepath, loki_getprefpath(), maxpath);
+    strncat(filepath, "/", maxpath);
+    strncat(filepath, file, maxpath);
+	return filepath;
+}
+
+char *loki_getcdromfile(const char *file, char *filepath, int maxpath)
+{
+	/* The CDROM path must have been set */
+    strncpy(filepath, loki_getcdrompath(), maxpath);
+    strncat(filepath, "/", maxpath);
+    strncat(filepath, file, maxpath);
+	return filepath;
+}
+
+size_t loki_getavailablespace(const char *path)
+{
+	struct statfs buf;
+	if(statfs(path,&buf))
+		return 0;
+	return (buf.f_bsize * buf.f_bavail) / 1024;
 }
 
 /* Code to determine the mount point of a CD-ROM */
