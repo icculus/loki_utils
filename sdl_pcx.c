@@ -95,7 +95,7 @@ static SDL_Surface *IMG_LoadPCX_RW(SDL_RWops *src)
 			Amask = 0x000000FF;
 		}
 	}
-	surface = SDL_AllocSurface(SDL_SWSURFACE, width, height,
+	surface = SDL_CreateRGBSurface(SDL_SWSURFACE, width, height,
 			pcxh.BitsPerPixel*pcxh.NPlanes,Rmask,Gmask,Bmask,Amask);
 	if ( surface == NULL ) {
 		SDL_SetError("Out of memory");
