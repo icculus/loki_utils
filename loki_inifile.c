@@ -307,6 +307,10 @@ int loki_inihaschanged(ini_file_t *ini)
 const char *loki_getinistring(ini_file_t *ini, const char *section, const char *key)
 {
 	struct section *s;
+	
+	if ( ! ini ) {
+		return NULL;
+	}
 
 	for ( s = ini->sections ; s ; s = s->next ) {
 		if ( s->name && ! strcasecmp(section, s->name) ) {
@@ -325,6 +329,10 @@ const char *loki_getinistring(ini_file_t *ini, const char *section, const char *
 int loki_putinistring(ini_file_t *ini, const char *section, const char *key, const char *value)
 {
 	struct section *s;
+
+	if ( ! ini ) {
+		return 0;
+	}
 
 	for ( s = ini->sections ; s ; s = s->next ) {
 		if ( s->name && ! strcasecmp(section, s->name) ) {
@@ -366,9 +374,14 @@ int loki_putinistring(ini_file_t *ini, const char *section, const char *key, con
 /* Write the INI file back to disk, returns error code */
 int loki_writeinifile(ini_file_t *ini, const char *path)
 {
-	struct section *s = ini->sections;
+	struct section *s;
 	FILE *fd;
 
+	if ( ! ini ) {
+		return 0;
+	}
+
+	s  = ini->sections;
 	if ( path ) {
 		fd = fopen(path, "wb");
 		if ( ! fd ) {
