@@ -81,6 +81,11 @@ void loki_splitpath(const char *path, char *drive, char *dir, char *fname, char 
 {
     char *copy = strdup(path), *ptr;
 
+    // Make sure we have a path.
+    if( !path ) {
+        return;
+    }
+
     if ( drive ) {
         strcpy(drive, "");
     }
@@ -102,11 +107,16 @@ void loki_splitpath(const char *path, char *drive, char *dir, char *fname, char 
         strcpy(fname,copy);
     }
     ptr = strrchr(fname, '.');
-    if(ptr) {
-        strcpy(ext, ptr);
+    if( ptr ) {
+        if ( ext ) {
+            strcpy(ext, ptr);
+        }
         *ptr = '\0';
-    } else 
-        *ext = '\0';
+    } else {
+        if ( ext ) {
+            *ext = '\0';
+        }
+    }
     free(copy);
 }
 
