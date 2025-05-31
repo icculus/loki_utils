@@ -57,7 +57,7 @@ enum status { _start, _section, _key, _value, _before_comment, _comment };
 
 static void free_section(struct section *s);
 
-static int isblank(char c)
+static int loki_isblank(char c)
 {
     return (c == ' ') || (c == '\t');
 }
@@ -116,7 +116,7 @@ static void trim_spaces(char *str)
         char *ptr = str + strlen(str) - 1;
 
         for ( ; ptr > str; -- ptr ) {
-            if ( !isblank(*ptr) ) {
+            if ( !loki_isblank(*ptr) ) {
                 *(ptr + 1) = '\0';
                 return;
             }
@@ -215,7 +215,7 @@ ini_file_t *loki_openinifile_internal(const char *path, int userreg)
                 s = add_new_section(ini);
                 break;
             default:
-                if ( isblank(c) ) {
+                if ( loki_isblank(c) ) {
                     break;
                 } else if ( ! s->name && ! userreg ) {
                     fprintf(stderr,"Parse error at beginning of %s INI file (line %d)!\n", path, line_number);
