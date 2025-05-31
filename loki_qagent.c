@@ -52,7 +52,7 @@ void loki_runqagent(const char *stack_trace_file)
 	args[i] = 0;
 
 	/* Run it, and complain if we can't */
-	execvp(QAGENT, args);
+	execvp(QAGENT, (char * const *)args);
 	fprintf(stderr, "Unable to execute " QAGENT " - exiting\n");
 	_exit(-1);
 }
@@ -91,7 +91,7 @@ void loki_runupdate(int argc, char *argv[])
 	args[i] = 0;
 
 	/* Run it, and complain if we can't */
-	execvp(UPDATE, args);
+	execvp(UPDATE, (char * const *)args);
 	fprintf(stderr, "Unable to execute " UPDATE " - exiting\n");
 	_exit(-1);
 }
