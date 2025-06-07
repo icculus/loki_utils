@@ -7,8 +7,8 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include <SDL/SDL.h>
-#include <SDL/SDL_syswm.h>
+#include "SDL.h"
+#include "SDL_syswm.h"
 #include "loki_utils.h"
 #include "sdl_utils.h"
 
