@@ -2,8 +2,8 @@
 /* This is a PCX image file loading framework, ripped straight from the SDL examples */
 
 #include <stdio.h>
-#include <SDL/SDL.h>
-#include <SDL/SDL_endian.h>
+#include "SDL.h"
+#include "SDL_endian.h"
 
 #include "sdl_utils.h"
 
